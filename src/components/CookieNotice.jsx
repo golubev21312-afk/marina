@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { consent, setConsent, startMetrika, YM_ID } from '../lib/track';
 import './CookieNotice.css';
 
@@ -16,7 +16,8 @@ export default function CookieNotice() {
     startMetrika(); // уже согласились раньше — подключаем сразу
   }, []);
 
-  if (!YM_ID || answer || pathname.startsWith('/admin')) return null;
+  // На странице политики не мешаем читать — там есть своя кнопка
+  if (!YM_ID || answer || pathname.startsWith('/admin') || pathname === '/privacy') return null;
 
   const reply = (yes) => {
     setConsent(yes);
@@ -26,8 +27,9 @@ export default function CookieNotice() {
   return (
     <div className="cookie-notice" role="region" aria-label="Cookie">
       <p>
-        Сайт считает посещения с помощью Яндекс.Метрики — она использует cookie. Можно отказаться: сайт будет
-        работать так же.
+        Сайт считает посещения с помощью Яндекс.Метрики — она использует cookie. Нажимая «Согласен», вы соглашаетесь
+        на обработку cookie и данных о посещении ООО «ЯНДЕКС» для статистики —{' '}
+        <Link to="/privacy">подробнее в политике</Link>. Можно отказаться: сайт будет работать так же.
       </p>
       <div className="cookie-notice__actions">
         <button type="button" className="cookie-notice__yes" onClick={() => reply(true)}>

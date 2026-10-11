@@ -15,12 +15,14 @@ const pages = {
   about: () => import('./pages/AboutPage'),
   order: () => import('./pages/OrderPage'),
   product: () => import('./pages/ProductPage'),
+  privacy: () => import('./pages/PrivacyPage'),
 };
 const Scenario = lazy(pages.scenario);
 const CatalogPage = lazy(pages.catalog);
 const AboutPage = lazy(pages.about);
 const OrderPage = lazy(pages.order);
 const ProductPage = lazy(pages.product);
+const PrivacyPage = lazy(pages.privacy);
 const AdminPage = lazy(() => import('./admin/AdminPage'));
 
 /**
@@ -62,6 +64,7 @@ export default function App() {
             <Route path="/about" element={<AboutPage />} />
             <Route path="/order" element={<OrderPage />} />
             <Route path="/izdelie/:id" element={<ProductPage />} />
+            <Route path="/privacy" element={<PrivacyPage />} />
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </Suspense>

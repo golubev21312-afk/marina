@@ -76,6 +76,15 @@
   color: var(--ink-soft);
 }
 
+/* Ссылка на политику — мелко, это служебное */
+.about__facts .about__privacy a {
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: var(--ink-soft);
+  border-bottom-color: var(--line);
+}
+
 /* Три фото лесенкой: среднее чуть ниже — живее ровного ряда */
 .about__photos {
   display: grid;

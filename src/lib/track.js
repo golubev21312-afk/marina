@@ -150,6 +150,16 @@ export function startMetrika() {
   ymHit();
 }
 
+/** Передумать (страница политики): забыть ответ и перезагрузить — плашка спросит снова, Метрика выгрузится. */
+export function resetConsent() {
+  try {
+    localStorage.removeItem(CONSENT_KEY);
+  } catch {
+    // хранилище недоступно — ответ и так не запомнен
+  }
+  location.reload();
+}
+
 export function setConsent(yes) {
   write('localStorage', CONSENT_KEY, yes ? 'yes' : 'no');
   if (yes) startMetrika();

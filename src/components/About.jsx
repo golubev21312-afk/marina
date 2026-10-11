@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 import VkConfirm from './VkConfirm';
 import './About.css';
 
@@ -58,6 +59,9 @@ export default function About() {
             <span>Адрес мастерской</span>
             <b>ул. Черных, д. 15</b>
             <small>Нижний Тагил</small>
+          </li>
+          <li className="about__privacy">
+            <Link to="/privacy">Политика обработки персональных данных</Link>
           </li>
         </ul>
       </div>

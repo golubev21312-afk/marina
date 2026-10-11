@@ -26,6 +26,11 @@
   color: var(--ink-soft);
 }
 
+.cookie-notice p a {
+  color: var(--rust);
+  text-underline-offset: 3px;
+}
+
 .cookie-notice__actions {
   display: flex;
   align-items: center;
