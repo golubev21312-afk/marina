@@ -1,0 +1,130 @@
+.about {
+  padding: clamp(60px, 9vw, 110px) 0;
+  background: var(--cream-soft);
+  border-block: 1px solid var(--line);
+}
+
+.about__inner {
+  display: grid;
+  grid-template-columns: 1.45fr 0.55fr;
+  gap: clamp(28px, 5vw, 70px);
+  align-items: start;
+}
+
+.about__text h2 {
+  margin: 0 0 18px;
+  font-size: clamp(26px, 3.4vw, 38px);
+  line-height: 1.12;
+}
+
+.about__text h2 em {
+  font-style: italic;
+  color: var(--rust);
+}
+
+.about__text p + p {
+  margin-top: 14px;
+}
+
+.about__text p {
+  font-size: clamp(14.5px, 1.4vw, 16px);
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+
+.about__facts {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-left: 22px;
+  border-left: 1px solid var(--line);
+}
+
+.about__facts li > span {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+.about__facts b,
+.about__facts a {
+  display: block;
+  margin-top: 5px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--pine-dark);
+}
+
+.about__facts a {
+  width: fit-content;
+  text-decoration: none;
+  border-bottom: 1px solid var(--gold);
+}
+
+.about__facts a:hover {
+  color: var(--rust);
+}
+
+.about__facts small {
+  display: block;
+  margin-top: 2px;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+}
+
+/* Три фото лесенкой: среднее чуть ниже — живее ровного ряда */
+.about__photos {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(14px, 2.4vw, 28px);
+  /* Отступ — паддингом: margin у .wrap перебивается общим «margin: 0 auto» */
+  padding-top: clamp(40px, 5vw, 64px);
+}
+
+.about__photos figure {
+  margin: 0;
+}
+
+.about__photos figure:nth-child(2) {
+  translate: 0 clamp(14px, 3vw, 36px);
+}
+
+.about__photos img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+@media (max-width: 860px) {
+  .about__inner {
+    grid-template-columns: 1fr;
+  }
+
+  .about__facts {
+    padding-left: 0;
+    padding-top: 20px;
+    border-left: none;
+    border-top: 1px solid var(--line);
+  }
+
+  .about__photos {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Третье фото на телефоне — во всю ширину под парой */
+  .about__photos figure:nth-child(3) {
+    grid-column: 1 / -1;
+  }
+
+  .about__photos figure:nth-child(3) img {
+    aspect-ratio: 4 / 3;
+  }
+}

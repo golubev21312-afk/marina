@@ -1,0 +1,13 @@
+/* Страница прокручивается сама: у body прокрутка выключена ради сценария */
+.page {
+  position: relative;
+  height: 100vh;
+  height: 100dvh;
+  overflow-y: auto;
+}
+
+.page__body {
+  padding-top: 96px;
+  /* Снизу место, чтобы плавающая кнопка не закрывала последние фото */
+  padding-bottom: 72px;
+}

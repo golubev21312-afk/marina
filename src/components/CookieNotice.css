@@ -1,0 +1,55 @@
+/* Плашка о cookie внизу экрана — не перекрывает страницу целиком */
+.cookie-notice {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 40;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px 20px;
+  border: 1px solid var(--glass-border);
+  border-radius: 4px 20px 4px 20px;
+  background: var(--paper);
+  box-shadow: 0 30px 60px -30px rgba(var(--shadow-rgb), 0.6);
+  color: var(--ink);
+}
+
+.cookie-notice p {
+  flex: 1 1 280px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.cookie-notice__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cookie-notice__yes {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px 14px 4px 14px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cookie-notice__no {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

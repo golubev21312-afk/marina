@@ -1,0 +1,61 @@
+.brand-mark {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: var(--mark-size, 104px);
+  height: var(--mark-size, 104px);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.55), transparent 58%),
+    var(--mark-bg);
+  box-shadow:
+    0 22px 44px -20px rgba(var(--shadow-rgb), 0.7),
+    inset 0 0 0 1px rgba(251, 246, 234, 0.16);
+  /* Знак — не кнопка: никакой реакции на нажатие и выделение */
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Тонкое золотое кольцо на отступе — знак не липнет к фону */
+.brand-mark::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 50%;
+  border: 1px solid var(--gold);
+  opacity: 0.5;
+}
+
+/* Мягкий ореол, который чуть дышит */
+.brand-mark::after {
+  content: '';
+  position: absolute;
+  inset: -18px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--gold-glow), transparent 68%);
+  animation: mark-breath 5s ease-in-out infinite;
+}
+
+@keyframes mark-breath {
+  0%,
+  100% {
+    opacity: 0.55;
+    scale: 1;
+  }
+  50% {
+    opacity: 0.95;
+    scale: 1.06;
+  }
+}
+
+.brand-mark img {
+  position: relative;
+  z-index: 1;
+  width: 82%;
+  height: 82%;
+  border-radius: 50%;
+  object-fit: cover;
+}

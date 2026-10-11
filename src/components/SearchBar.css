@@ -1,0 +1,98 @@
+/* Поле-пилюля в пару к вкладкам: кремовое, с мягкой тенью и золотой рамкой в фокусе */
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: min(340px, 100%);
+  height: 48px;
+  cursor: text;
+}
+
+.search__icon {
+  position: absolute;
+  left: 18px;
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: var(--ink-soft);
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  pointer-events: none;
+  transition: stroke 0.25s ease;
+}
+
+.search__input {
+  width: 100%;
+  height: 100%;
+  padding: 0 44px 0 48px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  box-shadow: 0 12px 28px -20px rgba(var(--shadow-rgb), 0.45);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: 15px;
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.search__input::placeholder {
+  color: var(--placeholder);
+}
+
+.search__input:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 4px var(--focus-ring),
+    0 14px 30px -20px rgba(var(--shadow-rgb), 0.5);
+}
+
+.search:focus-within .search__icon {
+  stroke: var(--rust);
+}
+
+/* Крестик виден, только когда есть что стирать */
+.search__clear {
+  position: absolute;
+  right: 8px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--cream-soft);
+  color: var(--ink-soft);
+  cursor: pointer;
+  opacity: 0;
+  scale: 0.6;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    scale 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.search.has-value .search__clear {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+}
+
+.search__clear:hover {
+  background: var(--accent-fill);
+  color: var(--on-accent);
+}
+
+.search__clear svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}

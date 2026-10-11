@@ -1,0 +1,99 @@
+.gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.gallery--single img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.gallery__stage {
+  position: relative;
+  height: min(60vh, 460px);
+  perspective: 1400px;
+  transform-style: preserve-3d;
+}
+
+.gallery__slide {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 68%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  transform: translateX(calc(var(--offset) * 42%)) rotateY(calc(var(--offset) * -34deg))
+    scale(calc(1 - min(abs(var(--offset)), 3) * 0.12));
+  opacity: calc(1 - min(abs(var(--offset)), 3) * 0.28);
+  transition: transform 0.55s cubic-bezier(0.4, 1.1, 0.5, 1), opacity 0.55s ease;
+}
+
+/* Дальние кадры не перехватывают клики у активного */
+.gallery__slide[aria-current='false'] {
+  cursor: pointer;
+}
+
+.gallery__slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+}
+
+.gallery__controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+.gallery__controls > button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--cream-soft);
+  color: var(--ink);
+  transition: background 0.25s ease, color 0.25s ease;
+}
+
+.gallery__controls > button:hover {
+  background: var(--pine-dark);
+  color: var(--cream-soft);
+}
+
+.gallery__controls svg {
+  width: 17px;
+  height: 17px;
+}
+
+.gallery__dots {
+  display: flex;
+  gap: 7px;
+}
+
+.gallery__dots button {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--line);
+  transition: background 0.25s ease, width 0.25s ease;
+}
+
+.gallery__dots button.is-active {
+  width: 20px;
+  background: var(--rust);
+}

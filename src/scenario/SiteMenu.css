@@ -1,0 +1,335 @@
+/* Парящая плашка над каруселью: стекло на кремовом фоне */
+.site-menu {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  width: min(1120px, calc(100% - 48px));
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--glass-border);
+  border-radius: 4px 22px 4px 22px;
+  background: var(--glass);
+  box-shadow: 0 18px 44px -26px rgba(var(--shadow-rgb), 0.5);
+  backdrop-filter: blur(12px);
+}
+
+.site-menu a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------- знак ---------- */
+.site-menu__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.05;
+  color: var(--pine-dark);
+  --mark-size: 40px;
+  cursor: default;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ореол знака в тесной плашке лишний */
+.site-menu__brand .brand-mark::after {
+  display: none;
+}
+
+.site-menu__brand .brand-mark::before {
+  inset: -4px;
+}
+
+.site-menu__brand small {
+  display: block;
+  margin-top: 2px;
+  font-family: 'Karla', sans-serif;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+/* ---------- пункты ---------- */
+.site-menu__nav {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline: auto;
+}
+
+.site-menu__link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  cursor: pointer;
+  transition:
+    color 0.25s ease,
+    background 0.25s ease;
+}
+
+.site-menu__link:hover,
+.site-menu__drop.is-open .site-menu__link {
+  color: var(--pine-dark);
+  background: var(--hover-fill);
+}
+
+.site-menu__link svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  transition: rotate 0.3s ease;
+}
+
+.site-menu__drop.is-open .site-menu__link svg {
+  rotate: 180deg;
+}
+
+/* ---------- выпадающий каталог ---------- */
+.site-menu__drop {
+  position: relative;
+}
+
+/* Невидимый мостик: курсор идёт от пункта к списку и не закрывает его */
+.site-menu__drop::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 14px;
+}
+
+.site-menu__panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  width: 380px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px 20px 4px 20px;
+  background: var(--paper);
+  box-shadow: 0 30px 60px -30px rgba(var(--shadow-rgb), 0.6);
+  opacity: 0;
+  visibility: hidden;
+  translate: -50% 8px;
+  transition:
+    opacity 0.28s ease,
+    translate 0.35s cubic-bezier(0.22, 0.8, 0.25, 1),
+    visibility 0.28s;
+}
+
+.site-menu__drop.is-open .site-menu__panel {
+  opacity: 1;
+  visibility: visible;
+  translate: -50% 0;
+}
+
+.site-menu__panel ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-menu__panel a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 3px 12px 3px 12px;
+  font-size: 14px;
+  color: var(--ink);
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.site-menu__panel a span {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.site-menu__panel a:hover {
+  background: var(--cream-soft);
+  color: var(--rust);
+}
+
+.site-menu__panel .site-menu__all {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pine-dark);
+  border-bottom: 1px solid var(--line);
+  border-radius: 3px 12px 0 0;
+}
+
+/* ---------- заказ ---------- */
+.site-menu__order {
+  flex: 0 0 auto;
+  border: none;
+  font: inherit;
+  cursor: pointer;
+  padding: 10px 18px;
+  border-radius: 2px 14px 2px 14px;
+  background: var(--accent-fill);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--on-accent) !important;
+  box-shadow: 0 12px 24px -14px var(--accent-glow);
+  transition:
+    background 0.25s ease,
+    translate 0.25s ease;
+}
+
+.site-menu__order:hover {
+  background: var(--accent-fill-hover);
+  translate: 0 -1px;
+}
+
+.site-menu__burger {
+  display: none;
+}
+
+/* ---------- телефон: пункты уходят под бургер ---------- */
+@media (max-width: 900px) {
+  .site-menu {
+    top: 10px;
+    gap: 10px;
+    width: calc(100% - 20px);
+    padding: 6px 6px 6px 8px;
+    flex-wrap: wrap;
+  }
+
+  .site-menu__brand {
+    gap: 9px;
+    font-size: 17px;
+    --mark-size: 34px;
+  }
+
+  .site-menu__brand small {
+    display: none;
+  }
+
+  /* Справа в ряд: тема, «Заказать», бургер */
+  .site-menu .theme-toggle {
+    margin-left: auto;
+    width: 34px;
+    height: 34px;
+  }
+
+  .site-menu .theme-toggle__swatch {
+    width: 24px;
+    height: 24px;
+  }
+
+  .site-menu__order {
+    padding: 8px 13px;
+    font-size: 13px;
+  }
+
+  .site-menu__burger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 999px;
+    background: var(--hover-fill);
+  }
+
+  .site-menu__burger span {
+    height: 1.8px;
+    background: var(--ink);
+    transition:
+      rotate 0.3s ease,
+      translate 0.3s ease,
+      opacity 0.2s ease;
+  }
+
+  /* Бургер превращается в крестик */
+  .site-menu.is-open .site-menu__burger span:nth-child(1) {
+    translate: 0 5.8px;
+    rotate: 45deg;
+  }
+
+  .site-menu.is-open .site-menu__burger span:nth-child(2) {
+    opacity: 0;
+  }
+
+  .site-menu.is-open .site-menu__burger span:nth-child(3) {
+    translate: 0 -5.8px;
+    rotate: -45deg;
+  }
+
+  /* Раскрытое меню — строкой ниже, во всю ширину плашки */
+  .site-menu__nav {
+    display: none;
+    order: 5;
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 2px;
+    margin: 4px 0 2px;
+    padding-top: 8px;
+    border-top: 1px solid var(--line);
+  }
+
+  .site-menu.is-open .site-menu__nav {
+    display: flex;
+  }
+
+  .site-menu__link {
+    justify-content: space-between;
+    padding: 11px 12px;
+    border-radius: 3px 12px 3px 12px;
+  }
+
+  .site-menu__drop::after {
+    display: none;
+  }
+
+  /* Список разделов раскрывается прямо в столбце, без всплывашки */
+  .site-menu__panel {
+    position: static;
+    display: none;
+    width: auto;
+    padding: 0 0 6px;
+    border: none;
+    background: none;
+    box-shadow: none;
+    translate: none;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .site-menu__drop.is-open .site-menu__panel {
+    display: block;
+    translate: none;
+  }
+}

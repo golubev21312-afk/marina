@@ -1,0 +1,130 @@
+/*
+ * Украшения темы «Малахит» — то, что не сводится к подмене цветов.
+ * Мотивы — из сказов Бажова: медь, шёлковый малахит, старое золото,
+ * ящерка в короне (её «камушек» — ромб ◆ у подписей).
+ */
+
+/* ---------- медь с металлическим отливом ---------- */
+/* Градиент шире кнопки: при наведении по металлу пробегает блик */
+:root[data-theme='malachite'] :is(
+    .order-card__cta,
+    .vk-confirm__go,
+    .catalog__soon-link,
+    .site-menu__order,
+    .back-home__arrow,
+    .search__clear:hover
+  ) {
+  background-size: 240% 100%;
+  background-position: 0% 50%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 232, 205, 0.55),
+    inset 0 -1px 0 rgba(60, 25, 8, 0.45),
+    0 14px 30px -16px var(--accent-glow);
+  text-shadow: 0 1px 0 rgba(255, 225, 190, 0.35);
+  transition:
+    background-position 0.9s cubic-bezier(0.22, 0.8, 0.25, 1),
+    translate 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+:root[data-theme='malachite'] :is(
+    .order-card__cta,
+    .vk-confirm__go,
+    .catalog__soon-link,
+    .site-menu__order
+  ):hover,
+:root[data-theme='malachite'] .back-home:hover .back-home__arrow {
+  background-position: 100% 50%;
+}
+
+/* ---------- медные надписи ---------- */
+:root[data-theme='malachite'] :is(h1, h2) em,
+:root[data-theme='malachite'] .slide h1 {
+  background: linear-gradient(100deg, #c7743b 10%, #f6c894 45%, #dc8f55 60%, #a85a2a 90%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Подписи-«каменья»: ромб, как камушек в короне ящерки */
+:root[data-theme='malachite'] :is(.kicker, .order-card__kicker)::before {
+  content: '◆';
+  margin-right: 0.7em;
+  font-size: 0.8em;
+  color: var(--gold);
+}
+
+/* ---------- стекло со светлой кромкой ---------- */
+:root[data-theme='malachite'] :is(
+    .site-menu,
+    .order-card,
+    .back-home,
+    .vk-confirm__box
+  ) {
+  backdrop-filter: blur(14px) saturate(1.2);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 196, 0.1),
+    0 24px 50px -26px rgba(0, 0, 0, 0.8);
+}
+
+:root[data-theme='malachite'] .vk-confirm__box {
+  background: var(--glass-strong);
+}
+
+/* Плашки шагов — без размытия фона: их десять поверх 3D, размытие
+   каждой пересчитывалось бы на каждом кадре сборки */
+:root[data-theme='malachite'] .steps__item {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 228, 196, 0.1),
+    0 14px 30px -18px rgba(0, 0, 0, 0.8);
+}
+
+/* Плашка факта в каталоге — закладка из меди */
+:root[data-theme='malachite'] .section-note__inner::before {
+  background: linear-gradient(#f2bd86, #c7743b 50%, #7c3f1b);
+}
+
+/* Тонкие полосы (отсчёт сцены, загрузка) — медная нить */
+:root[data-theme='malachite'] :is(.scenario__countdown, .scenario__bar-fill) {
+  background: linear-gradient(90deg, #7c3f1b, #f2bd86 60%, #dc8f55);
+}
+
+/* ---------- знак: логотип в малахитовой оправе ---------- */
+:root[data-theme='malachite'] .brand-mark {
+  background:
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.28), transparent 55%),
+    url('/textures/malachite.webp') 30% 40% / 160px,
+    var(--mark-bg);
+}
+
+:root[data-theme='malachite'] .brand-mark::before {
+  border-color: #c7743b;
+  opacity: 0.75;
+}
+
+/* ---------- номера шагов и активная вкладка — медная кромка ---------- */
+:root[data-theme='malachite'] :is(.steps__num, .tabs__pill) {
+  box-shadow:
+    inset 0 0 0 1px rgba(220, 143, 85, 0.55),
+    0 6px 16px -8px rgba(0, 0, 0, 0.8);
+}
+
+/* ---------- карточки карусели ---------- */
+:root[data-theme='malachite'] .face {
+  border: 1px solid var(--glass-border);
+}
+
+/* ---------- фото на странице «О мастерской» ---------- */
+:root[data-theme='malachite'] .about__photos img {
+  border-color: rgba(220, 160, 108, 0.35);
+}
+
+/* ---------- мелочи ---------- */
+:root[data-theme='malachite'] ::selection {
+  background: rgba(220, 143, 85, 0.4);
+  color: #fff8ec;
+}
+
+:root[data-theme='malachite'] .page {
+  scrollbar-color: #2d5b4b transparent;
+}

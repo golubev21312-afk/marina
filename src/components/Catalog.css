@@ -1,0 +1,80 @@
+/* Сверху отступ небольшой: над каталогом уже есть отступ страницы под меню */
+.catalog {
+  padding: clamp(20px, 3vw, 40px) 0 clamp(60px, 9vw, 110px);
+}
+
+.catalog__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px 24px;
+  margin-bottom: 18px;
+}
+
+.catalog__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: clamp(16px, 2vw, 26px);
+  margin-top: 28px;
+}
+
+.catalog__loading {
+  margin-top: 48px;
+  text-align: center;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* Пустой раздел: не тупик, а приглашение к индивидуальному заказу */
+.catalog__soon {
+  max-width: 520px;
+  margin: 48px auto 0;
+  padding: clamp(24px, 3vw, 34px);
+  border: 1px dashed var(--line);
+  border-radius: 4px 26px 4px 26px;
+  background: var(--cream-soft);
+  text-align: center;
+}
+
+.catalog__soon p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.catalog__soon .catalog__soon-title {
+  margin-bottom: 8px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(19px, 2vw, 23px);
+  font-weight: 600;
+  color: var(--pine-dark);
+}
+
+.catalog__soon-link {
+  display: inline-block;
+  margin-top: 18px;
+  padding: 12px 24px;
+  border-radius: 4px 18px 4px 18px;
+  background: var(--accent-fill);
+  box-shadow: 0 16px 30px -16px var(--accent-glow);
+  font-weight: 700;
+  color: var(--on-accent);
+  text-decoration: none;
+  transition:
+    background 0.25s ease,
+    translate 0.25s ease;
+}
+
+.catalog__soon-link:hover {
+  background: var(--accent-fill-hover);
+  translate: 0 -2px;
+}
+
+@media (max-width: 640px) {
+  .catalog__head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+}

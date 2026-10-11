@@ -1,0 +1,20 @@
+.fact {
+  max-width: 34ch;
+  margin: 0 0 14px;
+}
+
+.fact__topic {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+.fact__text {
+  margin-top: 10px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(17px, 2.2vw, 22px);
+  line-height: 1.4;
+  color: var(--pine-dark);
+}

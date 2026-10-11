@@ -1,0 +1,147 @@
+/*
+ * Украшения тем — заранее отрендеренные 3D-модели (картинки с прозрачным
+ * фоном): пластина с ящеркой в короне для «Малахита», матрёшки для «Белой».
+ * Каждое видно только в своей теме, клики сквозь них проходят.
+ */
+.decor {
+  display: none;
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 14px 16px rgba(0, 0, 0, 0.4));
+  /* Лёгкое «дыхание»: чуть приподнимается и покачивается */
+  animation: decor-float 7s ease-in-out infinite;
+  will-change: transform;
+}
+
+:root[data-theme='malachite'] .decor--malachite,
+:root[data-theme='kraft'] .decor--kraft {
+  display: block;
+}
+
+:root[data-theme='kraft'] .decor {
+  filter: drop-shadow(0 16px 18px rgba(var(--shadow-rgb), 0.35));
+}
+
+@keyframes decor-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1deg);
+  }
+  50% {
+    transform: translateY(-6px) rotate(1deg);
+  }
+}
+
+/* ---------- первый экран ---------- */
+.decor-intro {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.decor-intro.is-on {
+  opacity: 1;
+}
+
+.decor-intro__lizard {
+  position: absolute;
+  right: clamp(12px, 3.5vw, 64px);
+  bottom: clamp(74px, 12vh, 130px);
+  width: clamp(150px, 17vw, 280px);
+}
+
+/* Матрёшки по краям, по высоте — чуть ниже середины */
+.decor-intro__mat {
+  --mat-h: min(46vh, 420px);
+  position: absolute;
+  top: calc(50% - var(--mat-h) * 0.4);
+  height: var(--mat-h);
+  width: auto;
+}
+
+.decor-intro__mat--left {
+  left: clamp(8px, 5vw, 110px);
+  animation-delay: -3.5s;
+}
+
+.decor-intro__mat--right {
+  right: clamp(8px, 5vw, 110px);
+}
+
+/* ---------- карусель ---------- */
+.decor-show {
+  position: absolute;
+  left: clamp(12px, 3vw, 56px);
+  bottom: clamp(64px, 9vh, 96px);
+  z-index: 1;
+  width: clamp(120px, 13vw, 220px);
+  transition: opacity 0.4s ease;
+}
+
+.showcase.is-reading .decor-show {
+  opacity: 0;
+}
+
+/* ---------- каталог ---------- */
+.decor-catalog {
+  width: clamp(200px, 30vw, 320px);
+  margin: 36px auto 0;
+}
+
+/* ---------- индивидуальный заказ ---------- */
+.decor-order {
+  position: absolute;
+  right: 14px;
+  bottom: 12px;
+  width: clamp(110px, 11vw, 160px);
+}
+
+/* ---------- планшет и телефон ---------- */
+/* По краям матрёшкам места хватает только на широком экране. Уже —
+   они выглядывают из нижних углов, чуть уходя за край, и не задевают текст */
+@media (max-width: 1100px) {
+  .decor-intro__mat {
+    --mat-h: min(20vh, 200px);
+    top: auto;
+    bottom: calc(var(--mat-h) * -0.12);
+  }
+
+  .decor-intro__mat--left {
+    left: -6px;
+  }
+
+  .decor-intro__mat--right {
+    right: -6px;
+  }
+}
+
+@media (max-width: 700px) {
+  .decor-intro__mat {
+    --mat-h: 13vh;
+  }
+
+  /* Текст первого экрана на телефоне доходит почти до низа — ящерка в самом углу */
+  .decor-intro__lizard {
+    width: 108px;
+    right: 4px;
+    bottom: 6px;
+  }
+
+  /* В карусели — в углу рядом с точками, не на строке про цены */
+  .decor-show {
+    width: 84px;
+    left: 6px;
+    bottom: 8px;
+  }
+
+  .decor-order {
+    width: 92px;
+    right: 10px;
+    bottom: 10px;
+  }
+}

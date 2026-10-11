@@ -1,0 +1,420 @@
+.showcase {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 2.2vh, 24px);
+  /* Сверху — место под меню, снизу — под стрелки и точки сцен */
+  padding: 104px clamp(22px, 5vw, 76px) 78px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.7s ease;
+}
+
+.showcase.is-shown {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.showcase h2 {
+  font-size: clamp(20px, 2.7vw, 30px);
+  text-align: center;
+}
+
+.showcase__hint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  text-align: center;
+  transition: opacity 0.4s ease;
+}
+
+/* Первая строка — рукописной интонацией, между золотыми росчерками */
+.showcase__hint-lead {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'Fraunces', Georgia, serif;
+  font-style: italic;
+  font-size: clamp(15px, 1.5vw, 18px);
+  color: var(--pine-dark);
+}
+
+.showcase__hint-lead::before,
+.showcase__hint-lead::after {
+  content: '';
+  width: clamp(22px, 4vw, 48px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+
+.showcase__hint-lead::after {
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.showcase__hint-call {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+/* Точка касания с расходящимся кольцом — зовёт нажать */
+.showcase__tap {
+  position: relative;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--rust);
+}
+
+.showcase__tap::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rust);
+  animation: tap-ring 2.2s ease-out infinite;
+}
+
+@keyframes tap-ring {
+  0% {
+    opacity: 0.9;
+    scale: 0.4;
+  }
+  70%,
+  100% {
+    opacity: 0;
+    scale: 1.5;
+  }
+}
+
+.showcase.is-reading .showcase__hint {
+  opacity: 0;
+}
+
+.showcase__note {
+  margin: 0;
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--ink-soft);
+}
+
+/* ---------- карусель ---------- */
+.carousel {
+  position: relative;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.carousel__stage {
+  position: relative;
+  height: 100%;
+  perspective: 1500px;
+  transform-style: preserve-3d;
+}
+
+.prod-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  /* Высота считается от ширины явно: пропорцию (aspect-ratio) браузер
+     не анимирует в «auto», и раскрытая карточка прыгала по высоте */
+  --card-w: clamp(180px, 19vw, 240px);
+  width: var(--card-w);
+  height: calc(var(--card-w) * 1.4);
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  text-align: left;
+  transform-origin: 50% 50%;
+  transform-style: preserve-3d;
+  will-change: transform, opacity;
+  /* Размер и разворот едут одним временем и одной кривой,
+     иначе карточку дёргает на переходе */
+  transition:
+    transform 0.85s cubic-bezier(0.22, 0.8, 0.25, 1),
+    width 0.85s cubic-bezier(0.22, 0.8, 0.25, 1),
+    height 0.85s cubic-bezier(0.22, 0.8, 0.25, 1),
+    opacity 0.5s ease;
+  transform:
+    translate(-50%, -50%)
+    translateX(calc(var(--offset) * 58%))
+    translateZ(calc(var(--depth) * -130px))
+    rotateY(calc(var(--offset) * -28deg))
+    scale(var(--scale));
+  opacity: var(--fade);
+  z-index: var(--layer);
+}
+
+.prod-card__inner {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 0.85s cubic-bezier(0.22, 0.8, 0.25, 1);
+}
+
+/* Раскрытая карточка выходит вперёд и разворачивается в страницу */
+.prod-card.is-flipped {
+  width: min(660px, 88vw);
+  height: min(430px, 56vh);
+  z-index: 99;
+  transform: translate(-50%, -50%) translateZ(60px);
+}
+
+.prod-card.is-flipped .prod-card__inner {
+  transform: rotateY(180deg);
+}
+
+/* Соседи расступаются мягко, а не исчезают рывком */
+.showcase.is-reading .prod-card:not(.is-flipped) {
+  opacity: 0;
+  pointer-events: none;
+  transform:
+    translate(-50%, -50%)
+    translateX(calc(var(--offset) * 108%))
+    translateZ(-220px)
+    rotateY(calc(var(--offset) * -34deg))
+    scale(0.7);
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  border-radius: 4px 20px 4px 20px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  backface-visibility: hidden;
+  transition: box-shadow 0.5s ease;
+}
+
+.prod-card[data-active='true'] .face {
+  box-shadow: 0 34px 64px -28px rgba(var(--shadow-rgb), 0.7);
+}
+
+.prod-card.is-flipped .face {
+  box-shadow: 0 44px 80px -30px rgba(var(--shadow-rgb), 0.75);
+}
+
+.face--front .thumb {
+  flex: 1 1 auto;
+  display: block;
+  overflow: hidden;
+  background: var(--cream);
+}
+
+.face--front .thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.face--front .body {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  padding: 11px 14px 13px;
+  text-align: center;
+}
+
+.face--front .name {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--pine-dark);
+}
+
+/* ---------- оборот ---------- */
+.face--back {
+  transform: rotateY(180deg);
+  padding: clamp(18px, 2.4vw, 28px);
+  background: radial-gradient(120% 100% at 0% 0%, var(--paper) 0%, var(--paper-deep) 100%);
+}
+
+.face--back .name {
+  flex: 0 0 auto;
+  display: block;
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: clamp(17px, 2vw, 23px);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--pine-dark);
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+/* Две колонки и плавающий кегль — длинная история влезает без прокрутки */
+.face--back .story {
+  flex: 1 1 auto;
+  display: block;
+  margin-top: 13px;
+  overflow: hidden;
+  columns: 2;
+  column-gap: 26px;
+  column-rule: 1px solid var(--line);
+  color: var(--ink-soft);
+  font-size: clamp(10.5px, calc(20px - var(--len) * 0.0045px), 13.5px);
+  line-height: 1.55;
+}
+
+.face--back .story .para {
+  display: block;
+  break-inside: avoid;
+}
+
+.face--back .story .para + .para {
+  margin-top: 9px;
+}
+
+.face--back .story .para:first-child {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* Текст проявляется, когда карточка уже почти повернулась */
+.face--back .name,
+.face--back .story {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.prod-card.is-flipped .face--back .name,
+.prod-card.is-flipped .face--back .story {
+  opacity: 1;
+  transition-delay: 0.42s;
+}
+
+/* ---------- стрелки ---------- */
+.carousel__nav {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.carousel__nav button {
+  position: absolute;
+  top: 50%;
+  translate: 0 -50%;
+  display: grid;
+  place-items: center;
+  width: clamp(42px, 3.4vw, 52px);
+  aspect-ratio: 1;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--glass-strong);
+  color: var(--pine-dark);
+  box-shadow: var(--shadow);
+  pointer-events: auto;
+  transition:
+    background 0.25s ease,
+    color 0.25s ease,
+    border-color 0.25s ease,
+    translate 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.carousel__nav button:first-child {
+  left: 0;
+}
+
+.carousel__nav button:last-child {
+  right: 0;
+}
+
+.carousel__nav button:hover {
+  background: var(--deep);
+  color: var(--on-deep);
+  border-color: var(--deep);
+  box-shadow: 0 20px 40px -18px rgba(var(--shadow-rgb), 0.7);
+}
+
+.carousel__nav button:first-child:hover {
+  translate: -3px -50%;
+}
+
+.carousel__nav button:last-child:hover {
+  translate: 3px -50%;
+}
+
+.carousel__nav button:active {
+  scale: 0.94;
+}
+
+.carousel__nav svg {
+  width: 40%;
+  height: 40%;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+@media (max-width: 900px) {
+  /* Снизу место под стрелки и точки сцен, иначе ссылка на каталог на них наезжает */
+  .showcase {
+    padding: 84px 16px 76px;
+    gap: 10px;
+  }
+
+  .showcase h2 {
+    font-size: 19px;
+  }
+
+  .showcase__hint-lead {
+    font-size: 14.5px;
+  }
+
+  .showcase__hint-call {
+    font-size: 10.5px;
+  }
+
+  /* Размер от ширины и высоты сразу: на невысоком телефоне карточка не упрётся в заголовок */
+  /* На планшете карточка крупнее, на телефоне — по ширине и высоте экрана */
+  .prod-card {
+    --card-w: min(54vw, 300px, 34vh);
+  }
+
+  .prod-card.is-flipped {
+    width: calc(100vw - 32px);
+    height: min(540px, 64vh);
+  }
+
+  /* В одну колонку длинная история может не влезть — тогда листается внутри */
+  .face--back .story {
+    columns: 1;
+    overflow-y: auto;
+    font-size: 13px;
+  }
+
+  .carousel__nav button {
+    width: 40px;
+  }
+
+  /* Раскрытая карточка во всю ширину — стрелки легли бы поверх истории */
+  .carousel__nav {
+    transition: opacity 0.3s ease;
+  }
+
+  .showcase.is-reading .carousel__nav {
+    opacity: 0;
+    visibility: hidden;
+  }
+}

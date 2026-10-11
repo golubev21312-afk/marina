@@ -1,0 +1,242 @@
+/*
+ * Темы сайта. Компоненты берут цвета только отсюда — поэтому тема
+ * переключается одним атрибутом data-theme на <html>.
+ *
+ * Имена исторические, но смысл у каждой переменной один:
+ *   --cream        фон страницы (сплошной цвет)
+ *   --cream-soft   мягкая подложка: вкладки, плашки, секции
+ *   --paper        поверхность карточек и окон
+ *   --ink / --ink-soft   основной и второстепенный текст
+ *   --pine-dark    цвет заголовков и акцентного текста
+ *   --deep / --on-deep   тёмные плашки (номера шагов, активная вкладка) и текст на них
+ *   --rust         акцент: ссылки, подписи, тонкие полосы
+ *   --accent-fill / --on-accent   заливка главных кнопок и текст на ней
+ *   --glass / --glass-border      полупрозрачные парящие плашки (меню, блоки поверх 3D)
+ *   --page-bg / --stage-bg        полный фон страницы и 3D-сцены (может быть с текстурой)
+ */
+:root,
+:root[data-theme='kraft'] {
+  --cream: #f1e7d4;
+  --cream-soft: #fbf6ea;
+  --paper: #fffdf8;
+  --paper-deep: #fbf4e6;
+  --ink: #2b2319;
+  --ink-soft: #5b5142;
+  --pine: #44502e;
+  --pine-dark: #333c22;
+  --rust: #b1502f;
+  --rust-dark: #8f3e24;
+  --gold: #c79a3c;
+  --line: #dfd0ae;
+
+  --deep: #333c22;
+  --on-deep: #fbf6ea;
+  --accent-fill: #b1502f;
+  --accent-fill-hover: #8f3e24;
+  --on-accent: #fbf6ea;
+  --accent-glow: rgba(177, 80, 47, 0.8);
+
+  --glass: rgba(255, 253, 248, 0.82);
+  --glass-strong: rgba(255, 253, 248, 0.92);
+  --glass-border: rgba(223, 208, 174, 0.8);
+  --hover-fill: rgba(241, 231, 212, 0.7);
+  --muted-fill: rgba(var(--shadow-rgb), 0.09);
+  --on-deep-muted: rgba(251, 246, 234, 0.2);
+  --scrim: rgba(var(--shadow-rgb), 0.42);
+  --text-veil: rgba(249, 246, 240, 0.62);
+  --placeholder: #a39a8a;
+  --focus-ring: rgba(199, 154, 60, 0.16);
+  --gold-glow: rgba(199, 154, 60, 0.16);
+  --shadow-rgb: 43, 35, 25;
+
+  --page-bg: #f1e7d4;
+  --stage-bg: #f9f6f0;
+  --mark-bg: #333c22;
+  --theme-color: #f1e7d4;
+
+  --shadow: 0 18px 40px -22px rgba(var(--shadow-rgb), 0.45);
+  --shadow-lift: 0 26px 50px -24px rgba(var(--shadow-rgb), 0.55);
+  --radius-card: 4px 18px 4px 18px;
+  --radius-pill: 2px 14px 2px 14px;
+
+  /* Каскад появления контента после перехода — см. ui-references.md */
+  --enter-delay: 0.22s;
+
+  color-scheme: light;
+}
+
+/*
+ * «Малахит» — по мотивам Хозяйки Медной горы: ночной малахит с полосами
+ * камня, медь с металлическим отливом, старое золото, бледно-золотые
+ * заголовки. Отдельные украшения — в malachite.css.
+ */
+:root[data-theme='malachite'] {
+  --cream: #0a241d;
+  --cream-soft: rgba(13, 44, 35, 0.78);
+  --paper: #10352b;
+  --paper-deep: #0a2820;
+  --ink: #e2ece5;
+  --ink-soft: #a3bfb2;
+  --pine: #cfe3d6;
+  --pine-dark: #f1e1bf;
+  --rust: #dc8f55;
+  --rust-dark: #f0ad78;
+  --gold: #d9b56c;
+  --line: rgba(146, 196, 170, 0.2);
+
+  --deep: #05170f;
+  --on-deep: #f1e1bf;
+  --accent-fill: linear-gradient(
+    115deg,
+    #7c3f1b 0%,
+    #c7743b 22%,
+    #f2bd86 46%,
+    #d88a4f 58%,
+    #8e4a22 82%,
+    #c7743b 100%
+  );
+  --accent-fill-hover: var(--accent-fill);
+  --on-accent: #1a0d05;
+  --accent-glow: rgba(220, 143, 85, 0.55);
+
+  --glass: rgba(9, 34, 27, 0.72);
+  --glass-strong: rgba(11, 38, 30, 0.9);
+  --glass-border: rgba(220, 160, 108, 0.3);
+  --hover-fill: rgba(146, 214, 176, 0.1);
+  --muted-fill: rgba(226, 236, 229, 0.1);
+  --on-deep-muted: rgba(241, 225, 191, 0.18);
+  --scrim: rgba(1, 10, 7, 0.62);
+  --text-veil: rgba(6, 26, 20, 0.5);
+  --placeholder: #6f9384;
+  --focus-ring: rgba(220, 143, 85, 0.22);
+  --gold-glow: rgba(217, 181, 108, 0.22);
+  --shadow-rgb: 0, 8, 5;
+
+  /* Камень под тёмной вуалью, сверху — тёплый отсвет меди, как свет в штольне */
+  --page-bg:
+    radial-gradient(120% 70% at 50% -10%, rgba(220, 143, 85, 0.16), transparent 62%),
+    radial-gradient(90% 60% at 50% 110%, rgba(2, 10, 7, 0.7), transparent 70%),
+    linear-gradient(rgba(4, 22, 16, 0.64), rgba(4, 22, 16, 0.74)),
+    url('/textures/malachite.webp') center / 900px repeat,
+    #0a241d;
+  /* Сцены (главная, заказ): текст стоит прямо на камне — вуаль плотнее,
+     в центре тёмный ореол под надписями */
+  --stage-bg:
+    radial-gradient(60% 55% at 50% 45%, rgba(3, 18, 13, 0.55), transparent 75%),
+    radial-gradient(120% 70% at 50% -10%, rgba(220, 143, 85, 0.14), transparent 62%),
+    linear-gradient(rgba(4, 22, 16, 0.72), rgba(4, 22, 16, 0.8)),
+    url('/textures/malachite.webp') center / 900px repeat,
+    #0a241d;
+  --mark-bg: #05170f;
+  --theme-color: #0a241d;
+
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  height: 100%;
+  /* Сценарий идёт сам, как слайд-шоу — прокручивать нечего */
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: 'Karla', system-ui, sans-serif;
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  color: var(--pine-dark);
+  letter-spacing: -0.01em;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+
+.kicker {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--rust);
+}
+
+/* Зерно поверх всей страницы — фактура бумаги */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Пока подгружается 3D-сценарий */
+.scenario-placeholder {
+  display: grid;
+  place-items: center;
+  height: 100vh;
+  min-height: 560px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}

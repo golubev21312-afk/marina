@@ -1,0 +1,92 @@
+/* Затемнение поверх всей страницы */
+.vk-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: var(--scrim);
+  backdrop-filter: blur(4px);
+  animation: vk-fade 0.25s ease both;
+}
+
+.vk-confirm__box {
+  width: min(440px, 100%);
+  padding: clamp(22px, 3vw, 32px);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px 26px 4px 26px;
+  background: var(--paper);
+  box-shadow: 0 40px 80px -30px rgba(var(--shadow-rgb), 0.6);
+  animation: vk-rise 0.35s cubic-bezier(0.22, 0.8, 0.25, 1) both;
+}
+
+.vk-confirm__box h2 {
+  font-size: clamp(20px, 2.2vw, 24px);
+  line-height: 1.2;
+}
+
+.vk-confirm__box p {
+  margin-top: 12px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+
+.vk-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-top: 22px;
+}
+
+.vk-confirm__go {
+  display: inline-block;
+  padding: 13px 26px;
+  border-radius: 4px 18px 4px 18px;
+  background: var(--accent-fill);
+  box-shadow: 0 16px 30px -16px var(--accent-glow);
+  font-weight: 700;
+  color: var(--on-accent);
+  text-decoration: none;
+  transition:
+    background 0.25s ease,
+    translate 0.25s ease;
+}
+
+.vk-confirm__go:hover {
+  background: var(--accent-fill-hover);
+  translate: 0 -2px;
+}
+
+.vk-confirm__stay {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.vk-confirm__stay:hover {
+  color: var(--pine-dark);
+}
+
+@keyframes vk-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes vk-rise {
+  from {
+    opacity: 0;
+    translate: 0 16px;
+    scale: 0.97;
+  }
+}

@@ -1,0 +1,145 @@
+/*
+ * Ящерка бежит по кривой (CSS Motion Path: offset-path + offset-distance)
+ * и сама поворачивается по ходу (offset-rotate: auto). Поверх всего,
+ * даже поверх перехода «пузырями», — и никогда не мешает кликам.
+ */
+.lizard {
+  --gait: 0.3s; /* полный цикл шага */
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 10000;
+  width: clamp(104px, 10vw, 150px);
+  aspect-ratio: 162 / 54;
+  offset-distance: 0%;
+  offset-rotate: auto;
+  offset-anchor: center;
+  scale: var(--lizard-scale, 1);
+  pointer-events: none;
+  will-change: offset-distance;
+}
+
+.lizard__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.5));
+}
+
+/* Все суставы вращаются вокруг своего начала координат */
+.lizard :is(.lz-body, .lz-neck, .lz-head, .lz-tail, .lz-leg) {
+  transform-box: view-box;
+  transform-origin: 0 0;
+}
+
+.lz-limb {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lz-limb--upper {
+  stroke: #1a7a43;
+  stroke-width: 2.8;
+}
+
+.lz-limb--lower {
+  stroke: #1f8a4c;
+  stroke-width: 2.1;
+}
+
+.lz-limb--toes {
+  stroke: #2a9a58;
+  stroke-width: 0.8;
+}
+
+/* ---------- волна по позвоночнику ---------- */
+/* Тело изгибается, голова гасит изгиб (смотрит вперёд), хвост отстаёт по фазе */
+.lz-body {
+  animation: lz-bend var(--gait) ease-in-out infinite alternate;
+  --bend: 5deg;
+}
+
+.lz-neck {
+  animation: lz-bend var(--gait) ease-in-out infinite alternate-reverse;
+  --bend: 6deg;
+}
+
+.lz-tail {
+  animation: lz-bend var(--gait) ease-in-out infinite alternate;
+}
+
+.lz-tail--0 {
+  --bend: 9deg;
+  animation-delay: calc(var(--gait) * -0.15);
+}
+
+.lz-tail--1 {
+  --bend: 12deg;
+  animation-delay: calc(var(--gait) * -0.3);
+}
+
+.lz-tail--2 {
+  --bend: 14deg;
+  animation-delay: calc(var(--gait) * -0.45);
+}
+
+.lz-tail--3 {
+  --bend: 15deg;
+  animation-delay: calc(var(--gait) * -0.6);
+}
+
+.lz-tail--4 {
+  --bend: 13deg;
+  animation-delay: calc(var(--gait) * -0.75);
+}
+
+@keyframes lz-bend {
+  from {
+    rotate: calc(var(--bend) * -1);
+  }
+  to {
+    rotate: var(--bend);
+  }
+}
+
+/* ---------- шаг: диагональные пары ---------- */
+/* Левая передняя с правой задней — вперёд, другая пара — назад */
+.lz-leg {
+  animation: lz-step var(--gait) ease-in-out infinite alternate;
+}
+
+.lz-leg--fr,
+.lz-leg--hl {
+  animation-direction: alternate-reverse;
+}
+
+@keyframes lz-step {
+  from {
+    rotate: -32deg;
+  }
+  to {
+    rotate: 30deg;
+  }
+}
+
+/* ---------- замерла: поза остаётся посреди шага, голова оглядывается ---------- */
+.lizard.is-still :is(.lz-body, .lz-neck, .lz-tail, .lz-leg) {
+  animation-play-state: paused;
+}
+
+.lizard.is-still .lz-head {
+  animation: lz-look 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes lz-look {
+  0%,
+  20% {
+    rotate: -13deg;
+  }
+  80%,
+  100% {
+    rotate: 11deg;
+  }
+}

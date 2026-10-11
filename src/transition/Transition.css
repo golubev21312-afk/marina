@@ -1,0 +1,110 @@
+/*
+ * Два круга: растут снизу и накрывают экран, под ними меняется страница,
+ * затем уходят вверх. Анимируется только transform — его считает видеокарта,
+ * без перерисовки, поэтому переход не дёргается.
+ * Круг маленький (24vmax) и растягивается в 10 раз: большой слой видеокарта
+ * не тянет, а у сплошного цвета растяжение даёт лишь мягкий край.
+ */
+.bubbles {
+  --cover-ms: 620ms;
+  --leave-ms: 680ms;
+  --lag: 110ms;
+  --ease-in: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-out: cubic-bezier(0.55, 0, 0.25, 1);
+}
+
+.bubbles__first,
+.bubbles__second {
+  position: fixed;
+  z-index: 9998;
+  top: 100%;
+  left: 50%;
+  width: 24vmax;
+  height: 24vmax;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  will-change: transform;
+  pointer-events: none;
+  animation-fill-mode: both;
+}
+
+/* Терракота и хвоя вместо неона из референса */
+.bubbles__first {
+  background: var(--rust);
+}
+
+.bubbles__second {
+  background: var(--deep);
+}
+
+/* Пока идёт переход, клики по странице не проходят */
+.bubbles.covering .bubbles__first,
+.bubbles.covering .bubbles__second,
+.bubbles.revealing .bubbles__first,
+.bubbles.revealing .bubbles__second {
+  pointer-events: auto;
+}
+
+.bubbles.covering .bubbles__first {
+  animation: bubble-grow var(--cover-ms) var(--ease-in) both;
+}
+
+.bubbles.covering .bubbles__second {
+  animation: bubble-grow var(--cover-ms) var(--lag) var(--ease-in) both;
+}
+
+/* Уходят в обратном порядке: сперва верхний хвойный, за ним терракота.
+   Небольшая пауза — новая страница успевает смонтироваться под заливкой */
+.bubbles.revealing .bubbles__second {
+  animation: bubble-leave var(--leave-ms) 90ms var(--ease-out) both;
+}
+
+.bubbles.revealing .bubbles__first {
+  animation: bubble-leave var(--leave-ms) calc(90ms + var(--lag)) var(--ease-out) both;
+}
+
+@keyframes bubble-grow {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+  }
+  to {
+    transform: translate(-50%, -50%) scale(10);
+  }
+}
+
+@keyframes bubble-leave {
+  from {
+    transform: translate(-50%, -50%) scale(10);
+  }
+  to {
+    transform: translate(-50%, calc(-50% - 100vh - 125vmax)) scale(10);
+  }
+}
+
+/* Каскад проявления контента на новой странице */
+@keyframes appear {
+  from {
+    opacity: 0;
+    translate: 0 24px;
+  }
+  to {
+    opacity: 1;
+    translate: 0;
+  }
+}
+
+.appear {
+  animation: appear 0.5s var(--enter-delay) both ease-out;
+}
+
+.appear-late {
+  animation: appear 0.5s calc(var(--enter-delay) * 2) both ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubbles {
+    --cover-ms: 1ms;
+    --leave-ms: 1ms;
+    --lag: 0ms;
+  }
+}
