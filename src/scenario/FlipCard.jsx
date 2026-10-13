@@ -2,7 +2,7 @@
  * Карточка изделия: спереди фото, на обороте история.
  * Позицию в веере задаёт `offset` — ноль у активной, дальше по кругу.
  */
-export default function FlipCard({ item, offset, layer, flipped, onSelect }) {
+export default function FlipCard({ item, offset, layer, flipped, photo = true, onSelect }) {
   const distance = Math.abs(offset);
   const storyLength = item.paragraphs.join(' ').length;
 
@@ -25,7 +25,7 @@ export default function FlipCard({ item, offset, layer, flipped, onSelect }) {
       <span className="prod-card__inner">
         <span className="face face--front">
           <span className="thumb">
-            <img src={item.photo} alt="" loading="lazy" />
+            {photo && <img src={item.photo} alt="" loading="lazy" />}
           </span>
           <span className="body">
             <span className="name">{item.title}</span>

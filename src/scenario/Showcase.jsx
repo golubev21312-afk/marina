@@ -6,7 +6,7 @@ import { emitMotion } from '../lib/motion';
 import './Showcase.css';
 
 /** Финальная сцена: карусель изделий с историями на обороте. */
-export default function Showcase({ shown }) {
+export default function Showcase({ shown, photos, theme }) {
   const ITEMS = useShowcaseItems();
   const [picked, setActive] = useState(0);
   const [flipped, setFlipped] = useState(null);
@@ -60,6 +60,7 @@ export default function Showcase({ shown }) {
                 offset={offset}
                 layer={ITEMS.length - Math.abs(offset)}
                 flipped={flipped === i}
+                photo={photos}
                 onSelect={() => pick(i)}
               />
             );
@@ -82,7 +83,9 @@ export default function Showcase({ shown }) {
 
       <p className="showcase__note">Актуальные цены — в каталоге</p>
 
-      <img className="decor decor--malachite decor-show" src="/img/lizard-plaque.webp" alt="" aria-hidden="true" />
+      {theme === 'malachite' && (
+        <img className="decor decor--malachite decor-show" src="/img/lizard-plaque.webp" alt="" aria-hidden="true" />
+      )}
     </div>
   );
 }

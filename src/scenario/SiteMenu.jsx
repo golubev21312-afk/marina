@@ -137,7 +137,7 @@ export default function SiteMenu() {
         Заказать в ВК
       </button>
 
-      {confirming && <VkConfirm href={VK_DIALOG} onClose={closeConfirm} />}
+      {confirming && <VkConfirm href={VK_DIALOG} goal="menu" onClose={closeConfirm} />}
 
       <button
         type="button"

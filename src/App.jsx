@@ -1,6 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import CookieNotice from './components/CookieNotice';
+import ErrorBoundary from './components/ErrorBoundary';
 import Lizards from './components/Lizards';
 import { trackPage } from './lib/track';
 import { TransitionProvider } from './transition/Transition';
@@ -24,6 +25,8 @@ const OrderPage = lazy(pages.order);
 const ProductPage = lazy(pages.product);
 const PrivacyPage = lazy(pages.privacy);
 const AdminPage = lazy(() => import('./admin/AdminPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const PasswordResetPage = lazy(() => import('./admin/PasswordReset'));
 
 /**
  * Когда браузер освободится, заранее подгружаем остальные страницы сайта —
@@ -41,13 +44,33 @@ function usePreloadPages() {
   }, []);
 }
 
-/** Статистика: каждая смена адреса — «открыта страница» (lib/track.js). */
+const TITLES = {
+  '/': 'Крафт — эксклюзивные подарки ручной работы',
+  '/catalog': 'Каталог — мастерская «Крафт»',
+  '/about': 'О мастерской «Крафт»',
+  '/order': 'Индивидуальный заказ — мастерская «Крафт»',
+  '/privacy': 'Политика обработки персональных данных — «Крафт»',
+};
+
+/**
+ * Каждая смена адреса: статистика (lib/track.js) и заголовок вкладки —
+ * иначе после захода по ссылке на изделие во вкладке так и висело бы его название.
+ */
 function PageTracker() {
   const { pathname, search } = useLocation();
   useEffect(() => {
     trackPage();
   }, [pathname, search]);
+  useEffect(() => {
+    if (!pathname.startsWith('/izdelie/')) document.title = TITLES[pathname] ?? 'Мастерская «Крафт»';
+  }, [pathname]);
   return null;
+}
+
+/** Упала страница — запасной экран; на другом адресе пробуем заново. */
+function Guarded({ children }) {
+  const { pathname } = useLocation();
+  return <ErrorBoundary key={pathname}>{children}</ErrorBoundary>;
 }
 
 /** Главная — 3D-сценарий; остальные разделы — отдельные страницы, переход «пузырями». */
@@ -57,17 +80,21 @@ export default function App() {
     <BrowserRouter>
       <PageTracker />
       <TransitionProvider>
-        <Suspense fallback={null}>
-          <Routes>
-            <Route path="/" element={<Scenario />} />
-            <Route path="/catalog" element={<CatalogPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/order" element={<OrderPage />} />
-            <Route path="/izdelie/:id" element={<ProductPage />} />
-            <Route path="/privacy" element={<PrivacyPage />} />
-            <Route path="/admin" element={<AdminPage />} />
-          </Routes>
-        </Suspense>
+        <Guarded>
+          <Suspense fallback={null}>
+            <Routes>
+              <Route path="/" element={<Scenario />} />
+              <Route path="/catalog" element={<CatalogPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/order" element={<OrderPage />} />
+              <Route path="/izdelie/:id" element={<ProductPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/admin" element={<AdminPage />} />
+              <Route path="/admin/reset/:token" element={<PasswordResetPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </Guarded>
         <Lizards />
         <CookieNotice />
       </TransitionProvider>

@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { pb } from '../lib/pb';
 import { failText } from './failText';
-
-const MIN = 8; // как в базе: пароль учётки editors — не короче 8 символов
+import { checkNewPassword, MIN_PASSWORD } from './password';
 
 /**
  * Смена своего пароля редактором (Марина в служебную панель /_/ не заходит).
@@ -19,8 +18,8 @@ export default function PasswordPanel({ onDone, onCancel }) {
 
   const submit = async (event) => {
     event.preventDefault();
-    if (password.length < MIN) return setError(`Новый пароль — не короче ${MIN} символов.`);
-    if (password !== repeat) return setError('Новый пароль и повтор не совпадают.');
+    const invalid = checkNewPassword(password, repeat);
+    if (invalid) return setError(invalid);
     if (password === oldPassword) return setError('Новый пароль такой же, как старый.');
     setBusy(true);
     setError('');
@@ -39,7 +38,15 @@ export default function PasswordPanel({ onDone, onCancel }) {
       return;
     }
     try {
-      await pb.collection(collectionName).authWithPassword(email, password);
+      await pb
+        .collection(collectionName)
+        .authWithPassword(email, password)
+        // База пускает не больше 2 входов за 3 секунды — если попросила подождать, ждём и пробуем ещё раз
+        .catch(async (err) => {
+          if (err?.status !== 429) throw err;
+          await new Promise((resolve) => setTimeout(resolve, 3200));
+          return pb.collection(collectionName).authWithPassword(email, password);
+        });
       onDone(true);
     } catch {
       // Пароль уже сменён, а войти заново не вышло (например, пропала связь)
@@ -67,7 +74,7 @@ export default function PasswordPanel({ onDone, onCancel }) {
       <label className="admin-field">
         <span className="admin-label">Новый пароль</span>
         <input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-        <small className="admin-hint">Не короче {MIN} символов.</small>
+        <small className="admin-hint">Не короче {MIN_PASSWORD} символов.</small>
       </label>
 
       <label className="admin-field">

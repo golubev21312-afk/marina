@@ -3,6 +3,7 @@ import { pb } from '../lib/pb';
 import { refreshCategories, slugify, useCategories } from '../lib/categories';
 import { refreshProducts, useProducts } from '../lib/products';
 import { failText } from './failText';
+import { saveOrder, useListAction } from './listActions';
 
 /** Форма раздела: название, приписка, описание для плашки над каталогом. */
 function CategoryForm({ category, onSave, onCancel }) {
@@ -73,8 +74,6 @@ export default function CategoriesPanel({ onNotice }) {
   const { items: products } = useProducts();
   const [editing, setEditing] = useState(null); // null | 'new' | id
   const [deleting, setDeleting] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
 
   const edit = (what) => {
     setError('');
@@ -87,6 +86,7 @@ export default function CategoriesPanel({ onNotice }) {
     await refreshCategories();
     await refreshProducts(); // у товаров в ответе — slug раздела
   };
+  const { busy, error, setError, run } = useListAction(reload);
 
   const create = async (data) => {
     const taken = new Set(categories.map((c) => c.slug));
@@ -106,26 +106,13 @@ export default function CategoriesPanel({ onNotice }) {
     onNotice('Раздел сохранён.');
   };
 
-  // Действие в списке: одно за раз, ошибка — на экране, а не только в консоли
-  const run = async (what, action) => {
-    setBusy(true);
-    setError('');
-    try {
-      await action();
-    } catch (err) {
-      setError(failText(err, what));
-      await reload();
-    }
-    setBusy(false);
-  };
-
   // Товары в разделе считаем по базе, а не по списку в браузере: он мог
   // не загрузиться — тогда раздел казался бы пустым, а база молча отказала бы
   const remove = (category) =>
     run('удалить раздел', async () => {
       const { totalItems } = await pb
         .collection('products')
-        .getList(1, 1, { filter: pb.filter('category = {:id}', { id: category.id }), skipTotal: false });
+        .getList(1, 1, { filter: pb.filter('category = {:id}', { id: category.id }) });
       if (totalItems) {
         setDeleting(null);
         await refreshProducts();
@@ -138,16 +125,9 @@ export default function CategoriesPanel({ onNotice }) {
       onNotice(`Раздел «${category.title}» удалён.`);
     });
 
-  // Меняем местами с соседом: sort у всех переписываем подряд, без пропусков
   const move = (index, delta) =>
     run('поменять порядок', async () => {
-      const order = [...categories];
-      const target = index + delta;
-      if (target < 0 || target >= order.length) return;
-      [order[index], order[target]] = [order[target], order[index]];
-      for (const [i, c] of order.entries()) {
-        if (c.sort !== (i + 1) * 10) await pb.collection('categories').update(c.id, { sort: (i + 1) * 10 });
-      }
+      await saveOrder('categories', categories, index, delta);
       await refreshCategories();
     });
 

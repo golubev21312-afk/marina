@@ -43,6 +43,23 @@
   color: var(--ink-soft);
 }
 
+/* Кнопка, которая выглядит как ссылка («Забыли пароль?», «Ко входу») */
+.admin-linkbtn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.admin-login__go {
+  text-align: center;
+  text-decoration: none;
+}
+
 /* ---------- верх ---------- */
 .admin-top {
   display: flex;

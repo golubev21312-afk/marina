@@ -9,7 +9,8 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "stories": "node scripts/build-stories.mjs",
-    "db": "backend\\pocketbase.exe serve --http 127.0.0.1:8090 --dir backend/pb_data --migrationsDir backend/pb_migrations --hooksDir backend/pb_hooks"
+    "db": "backend\\pocketbase.exe serve --http 127.0.0.1:8090 --dir backend/pb_data --migrationsDir backend/pb_migrations --hooksDir backend/pb_hooks",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "gsap": "^3.15.0",
@@ -21,6 +22,7 @@
     "three": "^0.186.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.7",
     "@vitejs/plugin-react": "^6.1.1",

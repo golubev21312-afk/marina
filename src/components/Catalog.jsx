@@ -39,7 +39,7 @@ export default function Catalog({ initialSection = 'all' }) {
 
   const pick = (id) => {
     emitMotion();
-    trackSection(id);
+    if (id !== activeTab.id) trackSection(id);
     setActive(id);
     setTurn((n) => n + 1);
   };

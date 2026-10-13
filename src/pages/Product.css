@@ -80,6 +80,21 @@
   color: var(--ink-soft);
 }
 
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 28px;
+}
+
+.error-reload {
+  border: none;
+  border-bottom: 1px solid currentColor;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
 .product-missing__back {
   display: inline-block;
   margin-top: 22px;

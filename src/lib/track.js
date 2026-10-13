@@ -65,6 +65,9 @@ function source() {
 // Одно и то же событие дважды подряд (React в разработке запускает
 // эффекты дважды) записываем один раз
 let last = { key: '', at: 0 };
+// Хранилище может быть недоступно (приватный режим) — тогда помним в памяти,
+// иначе каждый просмотр считался бы новым заходом
+let entered = false;
 
 function send(data) {
   if (skip()) return;
@@ -74,15 +77,25 @@ function send(data) {
   last = { key, at: now };
 
   const record = { ...data, path: location.pathname.slice(0, 200), visitor: visitorId(), device: device() };
-  if (data.kind === 'page' && !read('sessionStorage', 'craft-entry')) {
+  if (data.kind === 'page' && !entered && !read('sessionStorage', 'craft-entry')) {
+    entered = true;
     write('sessionStorage', 'craft-entry', '1');
     Object.assign(record, { entry: true }, source());
   }
   // Статистика не должна мешать сайту: ошибка — молча мимо
   pb.collection('visits')
-    .create(record, { requestKey: null })
+    .create(record)
     .catch(() => {});
 }
+
+// Битая ссылка (обрезанная в мессенджере, «%E0%A4») — не роняем сайт
+const safeDecode = (text) => {
+  try {
+    return decodeURIComponent(text);
+  } catch {
+    return text;
+  }
+};
 
 /** Открыта страница (зовётся при каждой смене адреса). */
 export function trackPage() {
@@ -92,7 +105,7 @@ export function trackPage() {
   send({
     kind: 'page',
     ...(section && section !== 'all' && { section: section.slice(0, 60) }),
-    ...(product && { product: decodeURIComponent(product).slice(0, 30) }),
+    ...(product && { product: safeDecode(product).slice(0, 30) }),
   });
   ymHit();
 }
@@ -103,7 +116,7 @@ export function trackSection(slug) {
   send({ kind: 'section', section: slug.slice(0, 60) });
 }
 
-/** Нажали «Перейти в ВК»: order — заказ изделия, custom — свой заказ, community — сообщество. */
+/** Нажали «Перейти в ВК»: order — заказ изделия, custom — свой заказ, community — сообщество, menu — кнопка в меню. */
 export function trackVk(target) {
   send({ kind: 'vk', vk: target });
   ymCall('reachGoal', `vk_${target}`);
@@ -121,18 +134,22 @@ function ymCall(...args) {
 // Страница для Метрики — тоже один раз: при загрузке её отмечают и
 // startMetrika, и смена адреса
 let lastHit = { url: '', at: 0 };
+let prevUrl = ''; // откуда перешли внутри сайта — для Метрики это «источник» страницы
 function ymHit() {
   if (!ymLoaded) return;
   const url = location.pathname + location.search;
   const now = Date.now();
   if (url === lastHit.url && now - lastHit.at < 1500) return;
   lastHit = { url, at: now };
-  ymCall('hit', url, { referer: document.referrer });
+  ymCall('hit', url, { referer: prevUrl ? location.origin + prevUrl : document.referrer });
+  prevUrl = url;
 }
 
 /** Подключить Метрику — только с номером счётчика и после согласия. */
 export function startMetrika() {
-  if (!YM_ID || ymLoaded || consent() !== 'yes' || isBot()) return;
+  // Не в админке и не для вошедших редакторов: запись посещения (вебвизор)
+  // не должна видеть админку и ссылку сброса пароля
+  if (!YM_ID || ymLoaded || consent() !== 'yes' || skip()) return;
   ymLoaded = true;
   // Стандартный код счётчика из кабинета Метрики, без <noscript>
   window.ym =

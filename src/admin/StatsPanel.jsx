@@ -23,11 +23,18 @@ const SOURCES = {
   direct: 'Напрямую — по ссылке или из закладок',
   other: 'Другие сайты',
 };
-const VK = { order: 'Заказать изделие', custom: 'Индивидуальный заказ', community: 'Сообщество мастерской' };
+const VK = {
+  order: 'Заказать изделие — со страницы изделия',
+  menu: 'Заказать в ВК — кнопка в меню',
+  custom: 'Индивидуальный заказ',
+  community: 'Сообщество мастерской',
+};
 
 const dayStart = (date) => new Date(date.getFullYear(), date.getMonth(), date.getDate());
-const daysAgo = (n) => {
-  const d = dayStart(new Date());
+// now — момент загрузки данных: цифры считаем от него, а не от «сейчас» при
+// каждой отрисовке — иначе, пока вкладка открыта, периоды бы «плыли»
+const daysAgo = (n, now = new Date()) => {
+  const d = dayStart(now);
   d.setDate(d.getDate() - n);
   return d;
 };
@@ -56,16 +63,20 @@ function countBy(list, keyOf, labelOf = (k) => k) {
 
 /** Посещения за 30 дней и дата самой первой записи (с какого дня копится статистика). */
 async function fetchVisits() {
-  const records = await pb.collection('visits').getFullList({
-    filter: pb.filter('created >= {:from}', { from: daysAgo(29) }),
-    fields: 'kind,path,section,product,vk,visitor,entry,source,ref,device,created',
-    sort: 'created',
-    batch: 1000,
-  });
-  const first = await pb.collection('visits').getList(1, 1, { sort: 'created', fields: 'created', skipTotal: true });
+  const now = new Date();
+  const [records, first] = await Promise.all([
+    pb.collection('visits').getFullList({
+      filter: pb.filter('created >= {:from}', { from: daysAgo(29, now) }),
+      fields: 'kind,path,section,product,vk,visitor,entry,source,ref,device,created',
+      sort: 'created',
+      batch: 1000,
+    }),
+    pb.collection('visits').getList(1, 1, { sort: 'created', fields: 'created', skipTotal: true }),
+  ]);
   return {
     visits: records.map((r) => ({ ...r, at: toDate(r.created) })),
     since: first.items[0] ? toDate(first.items[0].created) : null,
+    now,
   };
 }
 
@@ -127,12 +138,13 @@ function TopList({ title, rows, unit, limit = 10 }) {
 }
 
 export default function StatsPanel() {
-  const { items: categories } = useCategories();
-  const { items: products } = useProducts();
+  const { status: categoriesStatus, items: categories } = useCategories();
+  const { status: productsStatus, items: products } = useProducts();
   const [visits, setVisits] = useState(null); // null — ещё грузим
   const [error, setError] = useState('');
   const [period, setPeriod] = useState(7);
   const [since, setSince] = useState(null); // дата самой первой записи
+  const [loadedAt, setLoadedAt] = useState(null);
 
   const load = useCallback(
     () =>
@@ -140,11 +152,13 @@ export default function StatsPanel() {
         (data) => {
           setVisits(data.visits);
           setSince(data.since);
+          setLoadedAt(data.now);
           setError('');
         },
         (err) => {
           setError(failText(err, 'загрузить статистику'));
           setVisits((v) => v ?? []);
+          setLoadedAt((at) => at ?? new Date());
         },
       ),
     [],
@@ -155,8 +169,9 @@ export default function StatsPanel() {
   }, [load]);
 
   const stats = useMemo(() => {
-    if (!visits) return null;
-    const list = visits.filter((v) => v.at >= daysAgo(period - 1));
+    if (!visits || !loadedAt) return null;
+    const now = loadedAt;
+    const list = visits.filter((v) => v.at >= daysAgo(period - 1, now));
     const pages = list.filter((v) => v.kind === 'page');
     const vk = list.filter((v) => v.kind === 'vk');
     const entries = list.filter((v) => v.entry);
@@ -169,8 +184,8 @@ export default function StatsPanel() {
     const unique = (from, to) => new Set(list.filter((v) => v.at >= from && v.at < to).map((v) => v.visitor)).size;
     const bars =
       period === 1
-        ? Array.from({ length: new Date().getHours() + 1 }, (_, h) => {
-            const from = new Date(daysAgo(0).getTime() + h * 3600e3);
+        ? Array.from({ length: now.getHours() + 1 }, (_, h) => {
+            const from = new Date(daysAgo(0, now).getTime() + h * 3600e3);
             return {
               key: h,
               value: unique(from, new Date(from.getTime() + 3600e3)),
@@ -179,17 +194,21 @@ export default function StatsPanel() {
             };
           })
         : Array.from({ length: period }, (_, i) => {
-            const from = daysAgo(period - 1 - i);
+            const from = daysAgo(period - 1 - i, now);
             return {
               key: from.getTime(),
-              value: unique(from, daysAgo(period - 2 - i)),
+              value: unique(from, daysAgo(period - 2 - i, now)),
               short: from.toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' }),
               full: from.toLocaleDateString('ru-RU', { weekday: 'short', day: 'numeric', month: 'long' }),
             };
           });
 
-    const categoryTitle = (slug) => categories.find((c) => c.slug === slug)?.title ?? `«${slug}» — раздел удалён`;
-    const productTitle = (id) => products.find((p) => p.id === id)?.title ?? 'Изделие удалено';
+    // Пока списки не загрузились — не пишем «удалено», это напугало бы
+    const categoryTitle = (slug) =>
+      categories.find((c) => c.slug === slug)?.title ??
+      (categoriesStatus === 'ready' ? `«${slug}» — раздел удалён` : `«${slug}»`);
+    const productTitle = (id) =>
+      products.find((p) => p.id === id)?.title ?? (productsStatus === 'ready' ? 'Изделие удалено' : 'Загружаем название…');
     const otherSites = countBy(
       entries.filter((v) => v.source === 'other'),
       (v) => v.ref,
@@ -226,7 +245,7 @@ export default function StatsPanel() {
       ),
       devices: countBy([...devices.values()], (d) => d, (d) => (d === 'mobile' ? 'С телефона' : 'С компьютера')),
     };
-  }, [visits, period, categories, products]);
+  }, [visits, loadedAt, period, categories, products, categoriesStatus, productsStatus]);
 
   return (
     <div className="stats">

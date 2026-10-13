@@ -27,3 +27,7 @@ dist-ssr
 backend/pb_data
 backend/pocketbase.exe
 backend/pocketbase
+
+# Автотесты: отчёты и снимки ошибок
+test-results
+playwright-report

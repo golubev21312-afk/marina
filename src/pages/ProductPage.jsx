@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import BackHome from '../components/BackHome';
 import SiteMenu from '../scenario/SiteMenu';
@@ -9,7 +10,12 @@ import './AboutPage.css';
 export default function ProductPage() {
   const { id } = useParams();
   const { items } = useProducts();
-  const section = items.find((item) => item.id === id)?.category;
+  const product = items.find((item) => item.id === id);
+  const section = product?.category;
+
+  useEffect(() => {
+    if (product) document.title = `${product.title} — мастерская «Крафт»`;
+  }, [product]);
 
   return (
     <div className="page">

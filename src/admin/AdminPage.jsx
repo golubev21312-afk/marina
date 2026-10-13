@@ -5,8 +5,10 @@ import { refreshProducts, toProduct, useProducts } from '../lib/products';
 import { formatPrice } from '../lib/format';
 import { useCategories } from '../lib/categories';
 import CategoriesPanel from './CategoriesPanel';
-import { failText } from './failText';
+import { saveOrder, useListAction } from './listActions';
 import PasswordPanel from './PasswordPanel';
+import { ForgotForm } from './PasswordReset';
+import { TOO_FAST } from './failText';
 import ShowcasePanel from './ShowcasePanel';
 import StatsPanel from './StatsPanel';
 import ProductEditor from './ProductEditor';
@@ -17,6 +19,7 @@ import './Admin.css';
  * и разделы). Браузер запоминает вход.
  */
 function Login({ onDone, note }) {
+  const [forgot, setForgot] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
@@ -30,10 +33,14 @@ function Login({ onDone, note }) {
       await pb.collection('editors').authWithPassword(email.trim(), password);
       onDone();
     } catch (err) {
-      setError(err?.status === 0 ? 'Нет связи с сервером.' : 'Неверная почта или пароль.');
+      setError(
+        err?.status === 0 ? 'Нет связи с сервером.' : err?.status === 429 ? TOO_FAST : 'Неверная почта или пароль.',
+      );
       setBusy(false);
     }
   };
+
+  if (forgot) return <ForgotForm onBack={() => setForgot(false)} />;
 
   return (
     <form className="admin-login" onSubmit={submit}>
@@ -56,6 +63,9 @@ function Login({ onDone, note }) {
       {error && <p className="admin-error">{error}</p>}
       <button type="submit" className="admin-btn admin-btn--main" disabled={busy}>
         {busy ? 'Входим…' : 'Войти'}
+      </button>
+      <button type="button" className="admin-back admin-linkbtn" onClick={() => setForgot(true)}>
+        Забыли пароль?
       </button>
       <Link className="admin-back" to="/">
         ← На сайт
@@ -82,8 +92,7 @@ export default function AdminPage() {
   const [deleting, setDeleting] = useState(null);
   const [notice, setNotice] = useState(null);
   const [query, setQuery] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const { busy, error, run } = useListAction(refreshProducts);
 
   if (!authed) return <div className="page admin"><Login note={loginNote} onDone={() => setAuthed(true)} /></div>;
 
@@ -108,19 +117,6 @@ export default function AdminPage() {
     window.scrollTo?.(0, 0);
   };
 
-  // Действие в списке: одно за раз, ошибка — на экране, а не только в консоли
-  const run = async (what, action) => {
-    setBusy(true);
-    setError('');
-    try {
-      await action();
-    } catch (err) {
-      setError(failText(err, what));
-      await refreshProducts();
-    }
-    setBusy(false);
-  };
-
   const remove = (product) =>
     run('удалить', async () => {
       await pb.collection('products').delete(product.id);
@@ -136,16 +132,9 @@ export default function AdminPage() {
       setNotice({ text: toProduct(record).available ? 'Отмечено: в наличии.' : 'Отмечено: нет в наличии.' });
     });
 
-  // Меняем местами с соседом: sort у всех переписываем подряд, без пропусков
   const move = (index, delta) =>
     run('поменять порядок', async () => {
-      const order = [...items];
-      const target = index + delta;
-      if (target < 0 || target >= order.length) return;
-      [order[index], order[target]] = [order[target], order[index]];
-      for (const [i, product] of order.entries()) {
-        if (product.sort !== (i + 1) * 10) await pb.collection('products').update(product.id, { sort: (i + 1) * 10 });
-      }
+      await saveOrder('products', items, index, delta);
       await refreshProducts();
     });
 

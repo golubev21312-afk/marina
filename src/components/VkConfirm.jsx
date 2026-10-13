@@ -18,7 +18,8 @@ const TEXTS = {
     'Кнопка «Перейти в ВК» откроет страницу сообщества «Крафт» ВКонтакте в новой вкладке. Там — новые работы мастерской, отзывы и новости, а написать мастеру можно кнопкой «Написать сообщение».',
 };
 
-export default function VkConfirm({ href, onClose, kind = 'order' }) {
+/** goal — как считать в статистике, если не так, как kind (кнопка в меню — 'menu') */
+export default function VkConfirm({ href, onClose, kind = 'order', goal = kind }) {
   const goRef = useRef(null);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function VkConfirm({ href, onClose, kind = 'order' }) {
             target="_blank"
             rel="noreferrer"
             onClick={() => {
-              trackVk(kind);
+              trackVk(goal);
               onClose();
             }}
           >

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { refreshShowcase, useShowcase } from '../lib/showcase';
 import { failText } from './failText';
+import { saveOrder, useListAction } from './listActions';
 import { shrinkImage } from './shrinkImage';
 
 /** Форматы, которые показывают все браузеры (так же разрешено в базе). */
@@ -129,21 +130,7 @@ export default function ShowcasePanel({ onNotice }) {
   const { status, items } = useShowcase();
   const [editing, setEditing] = useState(null); // null | 'new' | карточка
   const [deleting, setDeleting] = useState(null);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-
-  // Действие в списке: одно за раз, ошибка — на экране, а не только в консоли
-  const run = async (what, action) => {
-    setBusy(true);
-    setError('');
-    try {
-      await action();
-    } catch (err) {
-      setError(failText(err, what));
-      await refreshShowcase();
-    }
-    setBusy(false);
-  };
+  const { busy, error, run } = useListAction(refreshShowcase);
 
   const create = async (data) => {
     data.append('sort', String(Math.max(0, ...items.map((i) => i.sort ?? 0)) + 10));
@@ -175,16 +162,9 @@ export default function ShowcasePanel({ onNotice }) {
       onNotice(item.visible ? 'Карточка скрыта с главной.' : 'Карточка снова на главной.');
     });
 
-  // Меняем местами с соседом: sort у всех переписываем подряд, без пропусков
   const move = (index, delta) =>
     run('поменять порядок', async () => {
-      const order = [...items];
-      const target = index + delta;
-      if (target < 0 || target >= order.length) return;
-      [order[index], order[target]] = [order[target], order[index]];
-      for (const [i, item] of order.entries()) {
-        if (item.sort !== (i + 1) * 10) await pb.collection('showcase').update(item.id, { sort: (i + 1) * 10 });
-      }
+      await saveOrder('showcase', items, index, delta);
       await refreshShowcase();
     });
 

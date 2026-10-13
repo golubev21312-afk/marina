@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTheme } from '../theme/theme';
 import IntroSlide from './IntroSlide';
 import LoadingFacts from './LoadingFacts';
 import Showcase from './Showcase';
@@ -16,6 +17,7 @@ const MIN_FACT_MS = 5000;
 export default function Scenario() {
   const canvasRef = useRef(null);
   const { api, ready, progressPct, failed } = useMatryoshka(canvasRef);
+  const theme = useTheme();
   const [showcaseShown, setShowcaseShown] = useState(false);
   // Вернулись со страницы сайта — сразу к карусели, без факта: модель уже в кэше
   const toShowcase = useLocation().state?.toShowcase === true;
@@ -55,17 +57,26 @@ export default function Scenario() {
       {/* Украшения первого экрана. «Белая»: две разные матрёшки по краям,
           смотрят к центру. «Малахит»: Хозяйка Медной горы слева, ящерка справа */}
       <div className={`decor-intro ${scene === 0 ? 'is-on' : ''}`} aria-hidden="true">
-        <img className="decor decor--kraft decor-intro__mat decor-intro__mat--left" src="/img/decor-matryoshka.webp" alt="" />
-        <img className="decor decor--kraft decor-intro__mat decor-intro__mat--right" src="/img/decor-hozyayka-faces-left.webp" alt="" />
-        <img className="decor decor--malachite decor-intro__mat decor-intro__mat--left" src="/img/decor-hozyayka-faces-right.webp" alt="" />
-        <img className="decor decor--malachite decor-intro__lizard" src="/img/lizard-plaque.webp" alt="" />
+        {/* Только украшения текущей темы: скрытая CSS-ом картинка всё равно скачивается */}
+        {theme === 'kraft' ? (
+          <>
+            <img className="decor decor--kraft decor-intro__mat decor-intro__mat--left" src="/img/decor-matryoshka.webp" alt="" />
+            <img className="decor decor--kraft decor-intro__mat decor-intro__mat--right" src="/img/decor-hozyayka-faces-left.webp" alt="" />
+          </>
+        ) : (
+          <>
+            <img className="decor decor--malachite decor-intro__mat decor-intro__mat--left" src="/img/decor-hozyayka-faces-right.webp" alt="" />
+            <img className="decor decor--malachite decor-intro__lizard" src="/img/lizard-plaque.webp" alt="" />
+          </>
+        )}
       </div>
 
       <div className="scenario__slides">
         <IntroSlide active={scene === 0} />
       </div>
 
-      <Showcase shown={showcaseShown} />
+      {/* Фото карусели — после модели: на медленном интернете не отнимают у неё скорость */}
+      <Showcase shown={showcaseShown} photos={started} theme={theme} />
 
       <div className="scenario__controls">
         <button
