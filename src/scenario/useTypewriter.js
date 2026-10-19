@@ -18,15 +18,19 @@ export function useTypewriter(lines, enabled) {
   const [done, setDone] = useState(false);
   const timer = useRef(null);
 
-  useEffect(() => {
+  // Сцену перелистнули — в следующий раз набор начнётся заново. Сбрасываем
+  // прямо при смене enabled, а не в эффекте: иначе лишняя перерисовка
+  const [wasEnabled, setWasEnabled] = useState(enabled);
+  if (enabled !== wasEnabled) {
+    setWasEnabled(enabled);
     if (!enabled) {
-      // Сцену перелистнули назад — начинаем набор заново.
-      // Сбрасываем только если было что сбрасывать, иначе лишний рендер.
-      setTyped((current) => (current.some(Boolean) ? lines.map(() => 0) : current));
-      setDone((current) => (current ? false : current));
-      clearTimeout(timer.current);
-      return undefined;
+      setTyped(lines.map(() => 0));
+      setDone(false);
     }
+  }
+
+  useEffect(() => {
+    if (!enabled) return undefined;
 
     let line = 0;
     let char = 0;

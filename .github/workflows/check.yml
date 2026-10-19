@@ -1,0 +1,54 @@
+# Автопроверка на каждый коммит и pull request: линтер, сборка, автотесты.
+# Тесты — как локально (npm run test:e2e): сайт собирается и раздаётся
+# PocketBase на чистой временной базе. PocketBase для Linux скачивается
+# с GitHub и сверяется по контрольной сумме из релиза.
+name: Проверка
+
+on:
+  push:
+  pull_request:
+
+env:
+  POCKETBASE_VERSION: 0.40.5
+  POCKETBASE_SHA256: 1dbea1b01eb3dfe64953513859d01e759c96650c4e3264fa4eecd54b769382e4
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Зависимости
+        run: npm ci
+
+      - name: Линтер
+        run: npm run lint
+
+      - name: Сборка
+        run: npm run build
+
+      - name: PocketBase для Linux
+        run: |
+          zip="pocketbase_${POCKETBASE_VERSION}_linux_amd64.zip"
+          curl -fsSL -o "$zip" "https://github.com/pocketbase/pocketbase/releases/download/v${POCKETBASE_VERSION}/$zip"
+          echo "${POCKETBASE_SHA256}  $zip" | sha256sum -c -
+          unzip -o "$zip" pocketbase -d backend
+          chmod +x backend/pocketbase
+
+      # Тесты идут в Google Chrome (channel: 'chrome'), он на ubuntu-latest уже стоит
+      - name: Автотесты
+        run: npm run test:e2e
+
+      - name: Снимки упавших тестов
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results
+          retention-days: 7

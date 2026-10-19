@@ -20,6 +20,11 @@ export default defineConfig({
     userAgent:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
     viewport: { width: 1280, height: 860 },
+    // На GitHub нет видеокарты: 3D рисует программный WebGL (SwiftShader),
+    // иначе матрёшку проверить нельзя — сайт ушёл бы в режим «без 3D»
+    launchOptions: {
+      args: process.env.CI ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : [],
+    },
   },
   webServer: {
     command: 'node tests/e2e/server.mjs',

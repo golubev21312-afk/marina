@@ -88,7 +88,7 @@ export default function AdminPage() {
   const { items: categories } = useCategories();
   const categoryTitle = (id) => categories.find((c) => c.id === id)?.title ?? 'без раздела';
   const [tab, setTab] = useState('products'); // товары | разделы | главная | статистика | пароль
-  const [editing, setEditing] = useState(null); // null | 'new' | товар
+  const [editing, setEditing] = useState(null); // null | 'new' | товар | { copyOf: товар }
   const [deleting, setDeleting] = useState(null);
   const [notice, setNotice] = useState(null);
   const [query, setQuery] = useState('');
@@ -238,8 +238,9 @@ export default function AdminPage() {
           <CategoriesPanel onNotice={(text) => setNotice({ text })} />
         ) : editing ? (
           <ProductEditor
-            key={editing === 'new' ? 'new' : editing.id}
-            product={editing === 'new' ? null : editing}
+            key={editing === 'new' ? 'new' : editing.copyOf ? `copy-${editing.copyOf.id}` : editing.id}
+            product={editing === 'new' || editing.copyOf ? null : editing}
+            copyFrom={editing.copyOf}
             onSaved={saved}
             onCancel={() => setEditing(null)}
           />
@@ -309,6 +310,9 @@ export default function AdminPage() {
                       <>
                         <button type="button" className="admin-btn" onClick={() => setEditing(product)}>
                           Изменить
+                        </button>
+                        <button type="button" className="admin-btn" onClick={() => setEditing({ copyOf: product })}>
+                          Копировать
                         </button>
                         <select
                           className="admin-stock"

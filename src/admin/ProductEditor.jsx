@@ -20,18 +20,20 @@ const STOCK_HINT = {
 };
 
 /**
- * Форма товара: добавить новый или изменить существующий.
+ * Форма товара: добавить новый, изменить существующий или завести копию
+ * (copyFrom — похожее изделие: те же поля и фото, сохраняется новым товаром).
  * Фото — список «уже загруженные + новые»; первое в списке — главное
  * (его видно на карточке каталога).
  */
-export default function ProductEditor({ product, onSaved, onCancel }) {
-  const [title, setTitle] = useState(product?.title ?? '');
-  const [description, setDescription] = useState(product?.description ?? '');
-  const [price, setPrice] = useState(product?.price ? String(product.price) : '');
+export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) {
+  const base = product ?? copyFrom;
+  const [title, setTitle] = useState(copyFrom ? `${copyFrom.title} — копия` : (product?.title ?? ''));
+  const [description, setDescription] = useState(base?.description ?? '');
+  const [price, setPrice] = useState(base?.price ? String(base.price) : '');
   const { items: categories } = useCategories();
   const { items: products } = useProducts();
-  const [category, setCategory] = useState(product?.categoryId ?? '');
-  const [stock, setStock] = useState(product?.stock ?? 'in_stock');
+  const [category, setCategory] = useState(base?.categoryId ?? '');
+  const [stock, setStock] = useState(base?.stock ?? 'in_stock');
   const [photos, setPhotos] = useState(() =>
     (product?.files ?? []).map((name, i) => ({ key: `old-${name}`, kind: 'old', name, preview: product.small[i] })),
   );
@@ -41,6 +43,28 @@ export default function ProductEditor({ product, onSaved, onCancel }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef(null);
+  // Копия: фото исходного изделия скачиваем и загрузим заново, как новые
+  const [copyingPhotos, setCopyingPhotos] = useState(Boolean(copyFrom?.photos.length));
+
+  useEffect(() => {
+    if (!copyFrom?.photos.length) return undefined;
+    let alive = true;
+    Promise.all(
+      copyFrom.photos.map(async (url, i) => {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`фото ${response.status}`);
+        const blob = await response.blob();
+        const file = new File([blob], copyFrom.files[i], { type: blob.type });
+        return { key: `new-${++localId}`, kind: 'new', file, preview: URL.createObjectURL(file) };
+      }),
+    )
+      .then((copied) => alive && setPhotos(copied))
+      .catch(() => alive && setError('Фото не скопировались — добавьте их заново.'))
+      .finally(() => alive && setCopyingPhotos(false));
+    return () => {
+      alive = false;
+    };
+  }, [copyFrom]);
 
   // Превью новых фото — временные ссылки, освобождаем их при выходе из формы
   const photosRef = useRef(photos);
@@ -91,6 +115,7 @@ export default function ProductEditor({ product, onSaved, onCancel }) {
     setError('');
     if (!title.trim()) return setError('Напишите название товара.');
     if (!category) return setError('Выберите раздел каталога.');
+    if (copyingPhotos) return setError('Подождите — фото ещё копируются.');
     if (!photos.length) return setError('Добавьте хотя бы одно фото.');
     if (photos.length > MAX_PHOTOS) return setError(`У товара может быть не больше ${MAX_PHOTOS} фото — уберите лишние.`);
 
@@ -146,7 +171,13 @@ export default function ProductEditor({ product, onSaved, onCancel }) {
 
   return (
     <form className="admin-editor" onSubmit={save}>
-      <h2>{product ? 'Изменить товар' : 'Новый товар'}</h2>
+      <h2>{product ? 'Изменить товар' : copyFrom ? 'Копия товара' : 'Новый товар'}</h2>
+      {copyFrom && (
+        <p className="admin-hint">
+          Поля и фото взяты из «{copyFrom.title}». Поменяйте, что отличается, и сохраните — появится новый
+          товар, исходный останется как был.
+        </p>
+      )}
 
       <div className="admin-field">
         <span className="admin-label">Фото</span>
@@ -248,8 +279,8 @@ export default function ProductEditor({ product, onSaved, onCancel }) {
       {error && <p className="admin-error">{error}</p>}
 
       <div className="admin-actions">
-        <button type="submit" className="admin-btn admin-btn--main" disabled={busy}>
-          {busy ? 'Сохраняем…' : 'Сохранить'}
+        <button type="submit" className="admin-btn admin-btn--main" disabled={busy || copyingPhotos}>
+          {busy ? 'Сохраняем…' : copyingPhotos ? 'Копируем фото…' : 'Сохранить'}
         </button>
         <button type="button" className="admin-btn" onClick={onCancel} disabled={busy}>
           Отмена

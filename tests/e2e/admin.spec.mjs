@@ -71,8 +71,27 @@ test('товар: добавить с фото, в каталоге, налич�
   await expect(site.locator('.product__to-order-badge')).toHaveText('Под заказ');
   await site.close();
 
-  await row.getByRole('button', { name: 'Удалить' }).click();
-  await row.getByRole('button', { name: 'Да' }).click();
+  // Копия: те же поля и фото, сохраняется новым товаром, исходный — как был
+  await row.getByRole('button', { name: 'Копировать' }).click();
+  await expect(page.getByRole('heading', { name: 'Копия товара' })).toBeVisible();
+  await expect(page.getByPlaceholder('Например, Неваляшка «Учитель»')).toHaveValue('Ангел из автотеста — копия');
+  await expect(page.locator('.admin-photo img')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(page.getByText('Товар добавлен — он уже на сайте.')).toBeVisible({ timeout: 20_000 });
+
+  const api = await adminApi(request);
+  const [copy] = await api.list('products', "&filter=(title='Ангел из автотеста — копия')");
+  expect(copy.id).not.toBe(saved.id);
+  expect(copy.photos).toHaveLength(1);
+  expect(copy.price).toBe(990);
+  expect(copy.stock).toBe('to_order');
+  const [original] = await api.list('products', `&filter=(id='${saved.id}')`);
+  expect(original.photos).toEqual(saved.photos);
+  await api.remove('products', copy.id);
+
+  const exact = page.locator('.admin-item').filter({ has: page.getByText('Ангел из автотеста', { exact: true }) });
+  await exact.getByRole('button', { name: 'Удалить' }).click();
+  await exact.getByRole('button', { name: 'Да' }).click();
   await expect(page.getByText('«Ангел из автотеста» удалён.')).toBeVisible();
 });
 

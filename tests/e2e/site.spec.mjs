@@ -58,6 +58,9 @@ test('главная: загрузка и сборка матрёшки без �
   await page.goto('/');
   await expect(page.locator('.scenario__bar')).toBeAttached();
   await expect(page.locator('.scenario__bar')).not.toBeAttached({ timeout: 30_000 });
+  // 3D действительно работает, а не сайт ушёл в режим «без 3D»
+  const webgl = await page.evaluate(() => Boolean(document.querySelector('.scenario__canvas')?.getContext('webgl2')));
+  expect(webgl).toBe(true);
   expect(errors).toEqual([]);
 });
 

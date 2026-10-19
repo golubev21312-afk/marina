@@ -15,7 +15,7 @@ function readIndex() {
   for (const path of INDEX_PATHS) {
     try {
       return toString($os.readFile(path));
-    } catch (_) {
+    } catch {
       // нет файла — пробуем следующий
     }
   }
