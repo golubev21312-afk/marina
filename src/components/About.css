@@ -76,6 +76,15 @@
   color: var(--ink-soft);
 }
 
+/* «Показать на карте» — мелкая ссылка под адресом, не спорит с ним */
+.about__facts .about__map {
+  margin-top: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rust);
+}
+
 /* Ссылка на политику — мелко, это служебное */
 .about__facts .about__privacy a {
   font-family: inherit;

@@ -2,7 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { refreshShowcase, useShowcase } from '../lib/showcase';
 import { failText } from './failText';
-import { saveOrder, useListAction } from './listActions';
+import { saveList, saveOrder, useListAction } from './listActions';
+import OrderControls from './OrderControls';
+import { useDragOrder } from './useDragOrder';
 import { shrinkImage } from './shrinkImage';
 
 /** Форматы, которые показывают все браузеры (так же разрешено в базе). */
@@ -168,6 +170,13 @@ export default function ShowcasePanel({ onNotice }) {
       await refreshShowcase();
     });
 
+  const drag = useDragOrder(items, (order) =>
+    run('поменять порядок', async () => {
+      await saveList('showcase', order);
+      await refreshShowcase();
+    }),
+  );
+
   if (editing) {
     return (
       <ShowcaseForm
@@ -198,16 +207,19 @@ export default function ShowcasePanel({ onNotice }) {
       )}
 
       <ul className="admin-list">
-        {items.map((item, i) => (
-          <li key={item.id} className={`admin-item admin-item--showcase ${item.visible ? '' : 'is-hidden'}`}>
-            <div className="admin-order">
-              <button type="button" aria-label="Выше" disabled={busy || i === 0} onClick={() => move(i, -1)}>
-                ↑
-              </button>
-              <button type="button" aria-label="Ниже" disabled={busy || i === items.length - 1} onClick={() => move(i, 1)}>
-                ↓
-              </button>
-            </div>
+        {drag.shown.map((item, i) => (
+          <li
+            key={item.id}
+            ref={drag.rowRef(item.id)}
+            className={`admin-item admin-item--showcase ${item.visible ? '' : 'is-hidden'} ${drag.draggingId === item.id ? 'is-dragging' : ''}`}
+          >
+            <OrderControls
+              index={i}
+              count={items.length}
+              busy={busy}
+              onMove={(delta) => move(i, delta)}
+              handle={busy ? {} : drag.handle(item.id)}
+            />
             <img src={item.preview} alt="" />
             <div className="admin-item__info">
               <strong>{item.title}</strong>

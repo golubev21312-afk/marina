@@ -5,13 +5,17 @@ import { refreshProducts, STOCK, useProducts } from '../lib/products';
 import { formatPrice } from '../lib/format';
 import { useCategories } from '../lib/categories';
 import CategoriesPanel from './CategoriesPanel';
-import { saveOrder, useListAction } from './listActions';
+import { saveList, saveOrder, useListAction } from './listActions';
+import OrderControls from './OrderControls';
+import { useDragOrder } from './useDragOrder';
 import PasswordPanel from './PasswordPanel';
 import { ForgotForm } from './PasswordReset';
 import { TOO_FAST } from './failText';
 import ShowcasePanel from './ShowcasePanel';
+import ReviewsPanel from './ReviewsPanel';
 import StatsPanel from './StatsPanel';
 import ProductEditor from './ProductEditor';
+import ProductTrash from './ProductTrash';
 import './Admin.css';
 
 /**
@@ -87,12 +91,22 @@ export default function AdminPage() {
   const { status, items } = useProducts();
   const { items: categories } = useCategories();
   const categoryTitle = (id) => categories.find((c) => c.id === id)?.title ?? 'без раздела';
-  const [tab, setTab] = useState('products'); // товары | разделы | главная | статистика | пароль
+  const [tab, setTab] = useState('products'); // товары | разделы | главная | отзывы | статистика | пароль
   const [editing, setEditing] = useState(null); // null | 'new' | товар | { copyOf: товар }
   const [deleting, setDeleting] = useState(null);
   const [notice, setNotice] = useState(null);
   const [query, setQuery] = useState('');
+  // Отмеченные галочками — для действий над несколькими товарами сразу
+  const [picked, setPicked] = useState([]);
+  const [bulkTrash, setBulkTrash] = useState(false);
   const { busy, error, run } = useListAction(refreshProducts);
+  // Перетаскивание товаров — до раннего выхода: хуки вызываются всегда
+  const drag = useDragOrder(items, (order) =>
+    run('поменять порядок', async () => {
+      await saveList('products', order);
+      await refreshProducts();
+    }),
+  );
 
   if (!authed) return <div className="page admin"><Login note={loginNote} onDone={() => setAuthed(true)} /></div>;
 
@@ -119,10 +133,11 @@ export default function AdminPage() {
 
   const remove = (product) =>
     run('удалить', async () => {
-      await pb.collection('products').delete(product.id);
+      // Не стираем, а в корзину: 30 дней можно вернуть (см. ProductTrash)
+      await pb.collection('products').update(product.id, { deleted: new Date().toISOString() });
       setDeleting(null);
       await refreshProducts();
-      setNotice({ text: `«${product.title}» удалён.` });
+      setNotice({ text: `«${product.title}» в корзине — вернуть можно 30 дней (внизу списка).` });
     });
 
   const setStock = (product, stock) =>
@@ -144,6 +159,21 @@ export default function AdminPage() {
   const shown = needle
     ? items.filter((p) => norm(p.title).includes(needle) || norm(p.description).includes(needle))
     : items;
+
+  // Удалённые и пропавшие из списка — из отмеченных выпадают сами
+  const pickedLive = picked.filter((id) => items.some((p) => p.id === id));
+  const togglePick = (id) =>
+    setPicked((list) => (list.includes(id) ? list.filter((item) => item !== id) : [...list, id]));
+
+  /** Одно изменение — всем отмеченным; label — что сделали, для сообщения. */
+  const bulk = (change, label) =>
+    run('сохранить', async () => {
+      for (const id of pickedLive) await pb.collection('products').update(id, change);
+      await refreshProducts();
+      setNotice({ text: `Готово: ${pickedLive.length} шт. — ${label}.` });
+      setPicked([]);
+      setBulkTrash(false);
+    });
 
   return (
     <div className="page admin">
@@ -183,6 +213,18 @@ export default function AdminPage() {
             }}
           >
             Главная
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === 'reviews'}
+            onClick={() => {
+              setTab('reviews');
+              setEditing(null);
+              setNotice(null);
+            }}
+          >
+            Отзывы
           </button>
           <button
             type="button"
@@ -232,6 +274,8 @@ export default function AdminPage() {
           <PasswordPanel onDone={passwordChanged} onCancel={() => setTab('products')} />
         ) : tab === 'stats' ? (
           <StatsPanel />
+        ) : tab === 'reviews' ? (
+          <ReviewsPanel onNotice={(text) => setNotice({ text })} />
         ) : tab === 'showcase' ? (
           <ShowcasePanel onNotice={(text) => setNotice({ text })} />
         ) : tab === 'categories' ? (
@@ -269,27 +313,92 @@ export default function AdminPage() {
               <p className="admin-empty">Товаров пока нет. Нажмите «Добавить товар» — это займёт минуту.</p>
             )}
 
+            {pickedLive.length > 0 && (
+              <div className="admin-bulk" role="region" aria-label="Действия с отмеченными">
+                <strong>Отмечено: {pickedLive.length}</strong>
+                <select
+                  aria-label="Наличие для отмеченных"
+                  value=""
+                  disabled={busy}
+                  onChange={(e) => bulk({ stock: e.target.value }, STOCK[e.target.value].toLowerCase())}
+                >
+                  <option value="">Наличие…</option>
+                  {Object.entries(STOCK).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  aria-label="Раздел для отмеченных"
+                  value=""
+                  disabled={busy}
+                  onChange={(e) => bulk({ category: e.target.value }, `в разделе «${categoryTitle(e.target.value)}»`)}
+                >
+                  <option value="">Перенести в раздел…</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+                {bulkTrash ? (
+                  <>
+                    <span className="admin-item__ask">В корзину?</span>
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn--danger"
+                      disabled={busy}
+                      onClick={() => bulk({ deleted: new Date().toISOString() }, 'в корзине, вернуть можно 30 дней')}
+                    >
+                      Да
+                    </button>
+                    <button type="button" className="admin-btn" onClick={() => setBulkTrash(false)}>
+                      Нет
+                    </button>
+                  </>
+                ) : (
+                  <button type="button" className="admin-btn admin-btn--ghost" disabled={busy} onClick={() => setBulkTrash(true)}>
+                    В корзину
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="admin-btn"
+                  onClick={() => setPicked(pickedLive.length === shown.length ? [] : shown.map((p) => p.id))}
+                >
+                  {pickedLive.length === shown.length ? 'Снять все' : 'Отметить все'}
+                </button>
+              </div>
+            )}
+
             <ul className="admin-list">
-              {shown.map((product, i) => (
-                <li key={product.id} className={`admin-item ${needle ? '' : 'admin-item--ordered'}`}>
+              {(needle ? shown : drag.shown).map((product, i) => (
+                <li
+                  key={product.id}
+                  ref={drag.rowRef(product.id)}
+                  className={`admin-item ${needle ? '' : 'admin-item--ordered'} ${drag.draggingId === product.id ? 'is-dragging' : ''}`}
+                >
                   {!needle && (
-                    <div className="admin-order">
-                      <button type="button" aria-label="Выше" disabled={busy || i === 0} onClick={() => move(i, -1)}>
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        aria-label="Ниже"
-                        disabled={busy || i === items.length - 1}
-                        onClick={() => move(i, 1)}
-                      >
-                        ↓
-                      </button>
-                    </div>
+                    <OrderControls
+                      index={i}
+                      count={items.length}
+                      busy={busy}
+                      onMove={(delta) => move(i, delta)}
+                      handle={busy ? {} : drag.handle(product.id)}
+                    />
                   )}
                   {product.small[0] ? <img src={product.small[0]} alt="" /> : <span className="admin-item__nophoto" />}
                   <div className="admin-item__info">
-                    <strong>{product.title}</strong>
+                    <label className="admin-pick">
+                      <input
+                        type="checkbox"
+                        checked={pickedLive.includes(product.id)}
+                        onChange={() => togglePick(product.id)}
+                        aria-label={`Отметить «${product.title}»`}
+                      />
+                      <strong>{product.title}</strong>
+                    </label>
                     <span>
                       {categoryTitle(product.categoryId)} · {product.price ? formatPrice(product.price) : 'цена по запросу'}
                     </span>
@@ -336,6 +445,8 @@ export default function AdminPage() {
                 </li>
               ))}
             </ul>
+
+            {!needle && <ProductTrash onNotice={setNotice} />}
           </>
         )}
       </main>

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import FavoriteButton from '../components/FavoriteButton';
 import Gallery from '../components/Gallery';
 import ProductCard from '../components/ProductCard';
+import Reviews from '../components/Reviews';
 import VkConfirm from '../components/VkConfirm';
 import { TransitionLink } from '../transition/Transition';
 import { copyText } from '../lib/clipboard';
@@ -204,6 +205,8 @@ export default function Product() {
           <VkConfirm href={VK_DIALOG} onClose={close} copy={orderText} copying={copying} />
         )}
       </article>
+
+      <Reviews productId={product.id} title="Отзывы об этом изделии" />
 
       {related.length > 0 && (
         <section className="wrap related appear-late" aria-labelledby="related-title">

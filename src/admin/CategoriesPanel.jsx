@@ -3,7 +3,9 @@ import { pb } from '../lib/pb';
 import { refreshCategories, slugify, useCategories } from '../lib/categories';
 import { refreshProducts, useProducts } from '../lib/products';
 import { failText } from './failText';
-import { saveOrder, useListAction } from './listActions';
+import { saveList, saveOrder, useListAction } from './listActions';
+import OrderControls from './OrderControls';
+import { useDragOrder } from './useDragOrder';
 
 /** Форма раздела: название, приписка, описание для плашки над каталогом. */
 function CategoryForm({ category, onSave, onCancel }) {
@@ -206,6 +208,13 @@ export default function CategoriesPanel({ onNotice }) {
       await refreshCategories();
     });
 
+  const drag = useDragOrder(categories, (order) =>
+    run('поменять порядок', async () => {
+      await saveList('categories', order);
+      await refreshCategories();
+    }),
+  );
+
   return (
     <>
       {editing === 'new' ? (
@@ -219,7 +228,7 @@ export default function CategoriesPanel({ onNotice }) {
       {error && <p className="admin-error">{error}</p>}
 
       <ul className="admin-list">
-        {categories.map((category, i) => {
+        {drag.shown.map((category, i) => {
           const count = countOf(category.id);
           if (editing === category.id) {
             return (
@@ -233,15 +242,18 @@ export default function CategoriesPanel({ onNotice }) {
             );
           }
           return (
-            <li key={category.id} className="admin-item admin-item--category">
-              <div className="admin-order">
-                <button type="button" aria-label="Выше" disabled={busy || i === 0} onClick={() => move(i, -1)}>
-                  ↑
-                </button>
-                <button type="button" aria-label="Ниже" disabled={busy || i === categories.length - 1} onClick={() => move(i, 1)}>
-                  ↓
-                </button>
-              </div>
+            <li
+              key={category.id}
+              ref={drag.rowRef(category.id)}
+              className={`admin-item admin-item--category ${drag.draggingId === category.id ? 'is-dragging' : ''}`}
+            >
+              <OrderControls
+                index={i}
+                count={categories.length}
+                busy={busy}
+                onMove={(delta) => move(i, delta)}
+                handle={busy ? {} : drag.handle(category.id)}
+              />
               <div className="admin-item__info">
                 <strong>{category.title}</strong>
                 {category.subtitle && <span>{category.subtitle}</span>}

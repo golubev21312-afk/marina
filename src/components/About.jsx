@@ -5,6 +5,9 @@ import './About.css';
 
 const VK_COMMUNITY = 'https://vk.ru/craftthandmade';
 
+// Адрес на Яндекс Картах — поиском, без привязки к номеру организации
+const MAP_URL = `https://yandex.ru/maps/?text=${encodeURIComponent('Нижний Тагил, улица Черных, 15')}`;
+
 const PHOTOS = [
   { src: '/img/about-nabor.jpg', alt: 'Детский набор из натурального дерева в подарочной коробке' },
   { src: '/img/about-romashki.jpg', alt: 'Неваляшка в славянском наряде с ромашками' },
@@ -59,6 +62,9 @@ export default function About() {
             <span>Адрес мастерской</span>
             <b>ул. Черных, д. 15</b>
             <small>Нижний Тагил</small>
+            <a className="about__map" href={MAP_URL} target="_blank" rel="noreferrer">
+              Показать на Яндекс Картах
+            </a>
           </li>
           <li className="about__privacy">
             <Link to="/privacy">Политика обработки персональных данных</Link>

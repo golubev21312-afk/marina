@@ -18,6 +18,7 @@ routerAdd('GET', '/izdelie/{id}', (e) => {
   let record = null;
   try {
     record = $app.findRecordById('products', e.request.pathValue('id'));
+    if (record.getString('deleted')) throw new Error('в корзине');
   } catch {
     // Изделия нет — отдаём сайт как есть, он сам скажет «Такого изделия нет»
     return e.html(200, html);

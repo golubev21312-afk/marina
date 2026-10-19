@@ -35,6 +35,11 @@ export async function saveOrder(collection, items, index, delta) {
   if (target < 0 || target >= items.length) return;
   const order = [...items];
   [order[index], order[target]] = [order[target], order[index]];
+  await saveList(collection, order);
+}
+
+/** Записать порядок целиком (после перетаскивания): sort — 10, 20, 30… */
+export async function saveList(collection, order) {
   for (const [i, item] of order.entries()) {
     if (item.sort !== (i + 1) * 10) await pb.collection(collection).update(item.id, { sort: (i + 1) * 10 });
   }

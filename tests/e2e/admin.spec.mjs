@@ -37,6 +37,22 @@ test('разделы: добавить, переименовать, порядо
   await row('Тестовый раздел 2').getByRole('button', { name: 'Удалить' }).click();
   await row('Тестовый раздел 2').getByRole('button', { name: 'Да' }).click();
   await expect(page.getByText('Раздел «Тестовый раздел 2» удалён.')).toBeVisible();
+
+  // Перетаскивание: последний раздел — за ручку ⠿ на самый верх
+  const order = await names();
+  const last = order[order.length - 1];
+  const grip = row(last).locator('.admin-drag');
+  const top = await page.locator('.admin-item--category').first().boundingBox();
+  const from = await grip.boundingBox();
+  await page.mouse.move(from.x + from.width / 2, from.y + from.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(from.x + from.width / 2, top.y + 4, { steps: 12 });
+  await page.mouse.up();
+  await expect.poll(names).toEqual([last, ...order.slice(0, -1)]);
+  // Порядок записан в базу — после перезагрузки тот же
+  await page.reload();
+  await page.getByRole('tab', { name: /Разделы/ }).click();
+  await expect.poll(names).toEqual([last, ...order.slice(0, -1)]);
 });
 
 test('товар: добавить с фото, в каталоге, наличие, удалить', async ({ page, request }) => {
@@ -47,6 +63,11 @@ test('товар: добавить с фото, в каталоге, налич�
   await page.getByPlaceholder('Что это за изделие, для кого, чем особенное').fill('Проверка добавления товара.');
   await page.getByPlaceholder('Пусто — «цена по запросу»').fill('990');
   await page.locator('.admin-field').filter({ hasText: 'Раздел' }).locator('select').selectOption({ index: 1 });
+  // Предпросмотр карточки меняется вместе с формой
+  const preview = page.locator('.admin-preview');
+  await expect(preview).toContainText('Ангел из автотеста');
+  await expect(preview).toContainText('990');
+  await expect(preview.locator('img')).toHaveCount(1);
   await page.getByPlaceholder('Например, высота 12 см').fill('высота 15 см');
   await page.getByRole('button', { name: '+ учителю' }).click();
   await page.getByPlaceholder('Например, учителю — и Enter').fill('на юбилей');
@@ -99,7 +120,29 @@ test('товар: добавить с фото, в каталоге, налич�
   const exact = page.locator('.admin-item').filter({ has: page.getByText('Ангел из автотеста', { exact: true }) });
   await exact.getByRole('button', { name: 'Удалить' }).click();
   await exact.getByRole('button', { name: 'Да' }).click();
-  await expect(page.getByText('«Ангел из автотеста» удалён.')).toBeVisible();
+  await expect(page.getByText('«Ангел из автотеста» в корзине')).toBeVisible();
+
+  // Корзина: на сайте товара нет, «Вернуть» — снова есть, «Удалить насовсем» — стёрт
+  const check = await page.context().newPage();
+  await check.goto(`/izdelie/${saved.id}`);
+  await expect(check.getByRole('heading', { name: 'Такого изделия нет' })).toBeVisible();
+  const trash = page.locator('.admin-trash');
+  await trash.locator('summary').click();
+  const trashed = trash.locator('.admin-item').filter({ hasText: 'Ангел из автотеста' });
+  await expect(trashed).toContainText('сотрётся через 30 дн.');
+  await trashed.getByRole('button', { name: 'Вернуть' }).click();
+  await expect(page.getByText('«Ангел из автотеста» снова на сайте.')).toBeVisible();
+  await check.reload();
+  await expect(check.getByRole('heading', { name: 'Ангел из автотеста' })).toBeVisible();
+  await check.close();
+
+  await exact.getByRole('button', { name: 'Удалить' }).click();
+  await exact.getByRole('button', { name: 'Да' }).click();
+  await trash.locator('summary').click();
+  await trashed.getByRole('button', { name: 'Удалить насовсем' }).click();
+  await trashed.getByRole('button', { name: 'Да' }).click();
+  await expect(page.getByText('«Ангел из автотеста» удалён насовсем.')).toBeVisible();
+  expect(await api.list('products', `&filter=(id='${saved.id}')`)).toEqual([]);
 });
 
 test('раздел с товаром: «Нет» отменяет, без ответа через 30 с удаляется, товар переезжает', async ({ page, request }) => {
@@ -138,6 +181,75 @@ test('раздел с товаром: «Нет» отменяет, без отв
 
   const [moved] = await api.list('products', `&filter=${encodeURIComponent(`id='${product.id}'`)}`);
   expect(moved.category).toBe(target.id);
+  await api.remove('products', product.id);
+});
+
+test('несколько товаров сразу: наличие и в корзину', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const a = await api.create('products', { title: 'Пачка: первый', stock: 'in_stock', category: category.id });
+  const b = await api.create('products', { title: 'Пачка: второй', stock: 'in_stock', category: category.id });
+
+  await login(page);
+  await page.getByLabel('Отметить «Пачка: первый»').check();
+  await page.getByLabel('Отметить «Пачка: второй»').check();
+  const bar = page.getByRole('region', { name: 'Действия с отмеченными' });
+  await expect(bar).toContainText('Отмечено: 2');
+  await bar.getByLabel('Наличие для отмеченных').selectOption('to_order');
+  await expect(page.getByText('Готово: 2 шт. — под заказ.')).toBeVisible();
+  for (const id of [a.id, b.id]) {
+    const [record] = await api.list('products', `&filter=(id='${id}')`);
+    expect(record.stock).toBe('to_order');
+  }
+  await expect(bar).toHaveCount(0);
+
+  await page.getByLabel('Отметить «Пачка: первый»').check();
+  await page.getByLabel('Отметить «Пачка: второй»').check();
+  await bar.getByRole('button', { name: 'В корзину' }).click();
+  await bar.getByRole('button', { name: 'Да' }).click();
+  await expect(page.getByText('Готово: 2 шт. — в корзине')).toBeVisible();
+  await expect(page.locator('.admin-trash summary')).toContainText('Корзина · 2');
+  await api.remove('products', a.id);
+  await api.remove('products', b.id);
+});
+
+test('отзывы: добавить в админке — лента на «О мастерской» и под изделием, скрыть', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const product = await api.create('products', { title: 'Неваляшка с отзывом', stock: 'in_stock', category: category.id });
+
+  await login(page);
+  await page.getByRole('tab', { name: 'Отзывы' }).click();
+  await page.getByRole('button', { name: '+ Добавить отзыв' }).click();
+  await page.getByPlaceholder('Например, Анна').fill('Ольга');
+  await page.getByPlaceholder('Например, сентябрь 2026').fill('октябрь 2026');
+  await page.getByPlaceholder('Вставьте отзыв из ВК как есть').fill('Заказывала учительнице — она в восторге!\nСпасибо мастеру.');
+  await page.locator('.admin-field').filter({ hasText: 'О каком изделии' }).locator('select').selectOption(product.id);
+  await page.getByRole('button', { name: 'Сохранить' }).click();
+  await expect(page.getByText('Отзыв добавлен — он уже на сайте.')).toBeVisible();
+
+  const site = await page.context().newPage();
+  await site.goto('/about');
+  const review = site.locator('.review').filter({ hasText: 'Ольга' });
+  await expect(review).toContainText('она в восторге');
+  await expect(review).toContainText('октябрь 2026');
+  await expect(review.getByRole('link', { name: 'Неваляшка с отзывом' })).toBeVisible();
+  await site.goto(`/izdelie/${product.id}`);
+  await expect(site.getByRole('heading', { name: 'Отзывы об этом изделии' })).toBeVisible();
+  await expect(site.locator('.review')).toContainText('Спасибо мастеру');
+
+  // Скрытый отзыв с сайта пропадает
+  const row = page.locator('.admin-item--review').filter({ hasText: 'Ольга' });
+  await row.getByRole('button', { name: 'Скрыть' }).click();
+  await expect(row.getByText('скрыт с сайта')).toBeVisible();
+  await site.goto('/about');
+  await expect(site.getByRole('heading', { name: 'О мастерской' })).toBeVisible();
+  await expect(site.locator('.review')).toHaveCount(0);
+  await site.close();
+
+  await row.getByRole('button', { name: 'Удалить' }).click();
+  await row.getByRole('button', { name: 'Да' }).click();
+  await expect(page.getByText('Отзыв «Ольга» удалён.')).toBeVisible();
   await api.remove('products', product.id);
 });
 

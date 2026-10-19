@@ -1,0 +1,119 @@
+/* Лента отзывов: карточки-цитаты в колонки, высота — по тексту */
+.reviews {
+  padding-block: clamp(26px, 4vw, 44px) clamp(50px, 7vw, 90px);
+}
+
+.reviews h2 {
+  padding-top: clamp(22px, 3vw, 34px);
+  border-top: 1px solid var(--line);
+  font-size: clamp(22px, 2.6vw, 30px);
+}
+
+.reviews__list {
+  columns: 3 280px;
+  column-gap: clamp(14px, 2vw, 24px);
+  margin-top: 22px;
+}
+
+.review {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0 0 clamp(14px, 2vw, 24px);
+  padding: 22px 22px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+  break-inside: avoid;
+}
+
+.review__photo {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 3px 14px 3px 14px;
+}
+
+/* Кавычка-ёлочка — крупно, шрифтом заголовков */
+.review__text {
+  position: relative;
+  margin: 0;
+  padding-top: 22px;
+  font-size: 15.5px;
+  line-height: 1.62;
+  color: var(--ink);
+}
+
+.review__text::before {
+  content: '«';
+  position: absolute;
+  top: -14px;
+  left: -4px;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 54px;
+  line-height: 1;
+  color: var(--gold);
+}
+
+.review__text p + p {
+  margin-top: 10px;
+}
+
+.review__text.is-clamped {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 8;
+  overflow: hidden;
+}
+
+.review__more {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--rust);
+  cursor: pointer;
+}
+
+.review__by {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.review__by b {
+  font-family: 'Lora', Georgia, serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--pine-dark);
+}
+
+.review__by span {
+  color: var(--ink-soft);
+}
+
+/* «О каком изделии» — маленькая ссылка с миниатюрой */
+.review__product {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-basis: 100%;
+  margin-top: 4px;
+  font-weight: 600;
+  color: var(--rust);
+}
+
+.review__product img {
+  width: 32px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 2px 8px 2px 8px;
+}

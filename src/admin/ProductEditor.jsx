@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { useCategories } from '../lib/categories';
 import { DEFAULT_MATERIAL, STOCK, useProducts } from '../lib/products';
+import ProductCard from '../components/ProductCard';
 import { shrinkImage } from './shrinkImage';
 
 let localId = 0;
@@ -376,6 +377,24 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
       </div>
 
       <OccasionsField value={occasions} onChange={setOccasions} known={knownOccasions} />
+
+      {/* Предпросмотр: та же карточка, что в каталоге, по тому, что сейчас в форме.
+          inert — по ней не перейти и не «отложить» */}
+      <div className="admin-field">
+        <span className="admin-label">Так изделие будет выглядеть в каталоге</span>
+        <div className="admin-preview" inert>
+          <ProductCard
+            product={{
+              id: 'preview',
+              title: title.trim() || 'Название изделия',
+              description: description.trim(),
+              price: price ? Math.round(Number(price)) : null,
+              stock,
+              thumbs: photos[0] ? [photos[0].preview] : [],
+            }}
+          />
+        </div>
+      </div>
 
       {error && <p className="admin-error">{error}</p>}
 

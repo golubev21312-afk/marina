@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { pb } from './pb';
 import { createStore } from './store';
 
@@ -40,6 +41,8 @@ export function toProduct(record) {
     small: record.photos.map((file) => url(file, '240x300')),
     files: record.photos,
     sort: record.sort,
+    // Дата удаления в корзину; пусто — товар на сайте
+    deleted: record.deleted || '',
     created: record.created,
   };
 }
@@ -50,4 +53,16 @@ const store = createStore(async () => {
 }, 'Товары', 'products');
 
 export const refreshProducts = store.refresh;
-export const useProducts = store.useStore;
+
+/** Все товары, вместе с корзиной, — для админки. */
+export const useAllProducts = store.useStore;
+
+/**
+ * Товары без корзины — сайт и списки админки. Посетителям база корзину и
+ * не отдаёт; а Марине, если она вошла и смотрит сайт, — отдаёт, поэтому
+ * отсеиваем и здесь.
+ */
+export function useProducts() {
+  const state = store.useStore();
+  return useMemo(() => ({ ...state, items: state.items.filter((item) => !item.deleted) }), [state]);
+}

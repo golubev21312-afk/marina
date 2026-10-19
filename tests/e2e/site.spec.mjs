@@ -27,6 +27,7 @@ test('страницы открываются', async ({ page }) => {
   await expect(page.getByText('Тестовый ангел')).toBeVisible();
   await page.goto('/about');
   await expect(page.getByRole('heading', { name: /О мастерской/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Показать на Яндекс Картах' })).toHaveAttribute('href', /yandex\.ru\/maps/);
   await page.goto('/order');
   // Шаги проступают после загрузки 3D — на программной графике это дольше
   await expect(page.getByText('Берём округлую форму')).toBeVisible({ timeout: 20_000 });

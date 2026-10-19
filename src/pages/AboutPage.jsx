@@ -1,5 +1,6 @@
 import About from '../components/About';
 import BackHome from '../components/BackHome';
+import Reviews from '../components/Reviews';
 import SiteMenu from '../scenario/SiteMenu';
 import './AboutPage.css';
 
@@ -10,6 +11,7 @@ export default function AboutPage() {
       <SiteMenu />
       <div className="page__body appear">
         <About />
+        <Reviews />
       </div>
 
       <BackHome />
