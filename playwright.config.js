@@ -20,10 +20,11 @@ export default defineConfig({
     userAgent:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
     viewport: { width: 1280, height: 860 },
-    // На GitHub нет видеокарты: 3D рисует программный WebGL (SwiftShader),
-    // иначе матрёшку проверить нельзя — сайт ушёл бы в режим «без 3D»
+    // Рисуем программно (SwiftShader), без видеокарты — и здесь, и на GitHub,
+    // где её нет. Тесты не зависят от драйвера: 19.10 зависшая Intel UHD
+    // давала ~1 кадр/с, и Playwright не мог дождаться, пока кнопка «встанет»
     launchOptions: {
-      args: process.env.CI ? ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] : [],
+      args: ['--disable-gpu', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
     },
   },
   webServer: {

@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import BackHome from '../components/BackHome';
 import SiteMenu from '../scenario/SiteMenu';
@@ -12,13 +12,20 @@ export default function ProductPage() {
   const { items } = useProducts();
   const product = items.find((item) => item.id === id);
   const section = product?.category;
+  const pageRef = useRef(null);
+
+  // Перешли к другому изделию из «Посмотрите ещё» — страница та же,
+  // прокрутка осталась бы внизу; возвращаем к началу
+  useEffect(() => {
+    pageRef.current?.scrollTo({ top: 0 });
+  }, [id]);
 
   useEffect(() => {
     if (product) document.title = `${product.title} — мастерская «Крафт»`;
   }, [product]);
 
   return (
-    <div className="page">
+    <div className="page" ref={pageRef}>
       <SiteMenu />
       <div className="page__body">
         <Product />

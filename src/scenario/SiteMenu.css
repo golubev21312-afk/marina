@@ -104,6 +104,21 @@
   rotate: 180deg;
 }
 
+/* Счётчик отложенных — маленький кружок цвета акцента */
+.site-menu__fav span {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--rust);
+  color: var(--on-deep);
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- выпадающий каталог ---------- */
 .site-menu__drop {
   position: relative;

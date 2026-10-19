@@ -13,6 +13,12 @@ export const STOCK = {
   sold_out: 'Нет в наличии',
 };
 
+/** Материал, если Марина его не указала. */
+export const DEFAULT_MATERIAL = 'дерево, ручная роспись';
+
+/** Порог подборки «до 1000 ₽» в каталоге. */
+export const CHEAP_PRICE = 1000;
+
 /** Запись базы → товар в том виде, в каком его ждут компоненты. */
 export function toProduct(record) {
   const url = (file, thumb) => pb.files.getURL(record, file, thumb ? { thumb } : undefined);
@@ -25,6 +31,10 @@ export function toProduct(record) {
     category: record.expand?.category?.slug ?? '',
     categoryId: record.category,
     stock: record.stock || 'in_stock',
+    occasions: Array.isArray(record.occasions) ? record.occasions : [],
+    leadTime: record.lead_time ?? '',
+    material: record.material ?? '',
+    size: record.size ?? '',
     photos: record.photos.map((file) => url(file)),
     thumbs: record.photos.map((file) => url(file, '600x750')),
     small: record.photos.map((file) => url(file, '240x300')),

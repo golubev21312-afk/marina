@@ -340,6 +340,62 @@
   gap: 16px;
 }
 
+/* Поводы: выбранные метки и подсказки */
+.admin-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-tags--suggest {
+  margin-top: 2px;
+}
+
+.admin-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--cream-soft);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--pine-dark);
+}
+
+.admin-tag button {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.admin-tag button:hover {
+  color: var(--rust);
+}
+
+.admin-tag--add {
+  padding-right: 11px;
+  border-style: dashed;
+  background: none;
+  font-weight: 500;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.admin-tag--add:hover {
+  border-color: var(--gold);
+  color: var(--pine-dark);
+}
+
 .admin-hint {
   font-size: 13px;
   color: var(--ink-soft);

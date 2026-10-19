@@ -19,19 +19,34 @@ export async function login(page, account = EDITOR) {
   await expect(page.getByRole('tab', { name: /Товары/ })).toBeVisible();
 }
 
+// Вход суперпользователя — один на все тесты: база пускает не больше двух
+// входов за 3 с (защита от подбора), лишние входы она молча отклоняла
+let adminToken = null;
+
+async function superuserToken(request) {
+  for (let attempt = 1; !adminToken; attempt++) {
+    const response = await request.post('/api/collections/_superusers/auth-with-password', {
+      data: { identity: ADMIN.email, password: ADMIN.password },
+    });
+    if (response.ok()) adminToken = (await response.json()).token;
+    else if (attempt === 5) throw new Error(`Суперпользователь не вошёл: ${await response.text()}`);
+    else await new Promise((r) => setTimeout(r, 1500));
+  }
+  return adminToken;
+}
+
 /** Запросы к базе от суперпользователя — подготовить данные и проверить, что записалось. */
 export async function adminApi(request) {
-  const { token } = await (
-    await request.post('/api/collections/_superusers/auth-with-password', {
-      data: { identity: ADMIN.email, password: ADMIN.password },
-    })
-  ).json();
-  const headers = { Authorization: token };
+  const headers = { Authorization: await superuserToken(request) };
   return {
     list: async (collection, query = '') =>
       (await (await request.get(`/api/collections/${collection}/records?perPage=200${query}`, { headers })).json()).items,
-    create: async (collection, data) =>
-      (await request.post(`/api/collections/${collection}/records`, { headers, data })).json(),
+    // Не создалось — падаем с ответом базы, а не идём дальше с ошибкой вместо записи
+    create: async (collection, data) => {
+      const response = await request.post(`/api/collections/${collection}/records`, { headers, data });
+      if (!response.ok()) throw new Error(`Не создалась запись в ${collection}: ${await response.text()}`);
+      return response.json();
+    },
     remove: (collection, id) => request.delete(`/api/collections/${collection}/records/${id}`, { headers }),
   };
 }

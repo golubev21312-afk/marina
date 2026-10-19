@@ -19,6 +19,47 @@
   margin-top: 28px;
 }
 
+/* Подборки по поводу — тихие «пилюли» под вкладками разделов */
+.occasions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.occasions__label {
+  margin-right: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.occasions__chip {
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: var(--paper);
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--pine-dark);
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease;
+}
+
+.occasions__chip:hover {
+  border-color: var(--gold);
+}
+
+.occasions__chip[aria-pressed='true'] {
+  border-color: var(--deep);
+  background: var(--deep);
+  color: var(--on-deep);
+}
+
 .catalog__loading {
   margin-top: 48px;
   text-align: center;

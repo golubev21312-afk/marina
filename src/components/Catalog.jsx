@@ -5,7 +5,7 @@ import SectionNote from './SectionNote';
 import ProductCard from './ProductCard';
 import { TransitionLink } from '../transition/Transition';
 import { emitMotion } from '../lib/motion';
-import { useProducts } from '../lib/products';
+import { CHEAP_PRICE, useProducts } from '../lib/products';
 import { useCategories } from '../lib/categories';
 import { trackSection } from '../lib/track';
 import './Catalog.css';
@@ -25,7 +25,32 @@ function makeTabs(categories, products) {
   ];
 }
 
-export default function Catalog({ initialSection = 'all' }) {
+/** Подборка «до 1000 ₽» — не метка Марины, а по цене. */
+const CHEAP = 'cheap';
+
+/**
+ * Подборки по поводу: метки, которые Марина ставит изделиям, — самые
+ * частые первыми; плюс «до 1000 ₽», если такие изделия есть.
+ */
+function makeOccasions(products) {
+  const counts = new Map();
+  products.forEach((item) =>
+    item.occasions.forEach((name) => counts.set(name, (counts.get(name) ?? 0) + 1)),
+  );
+  const tags = [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ru'))
+    .map(([name]) => ({ id: name, title: name }));
+  const cheap = products.some((item) => item.price && item.price <= CHEAP_PRICE);
+  return cheap ? [...tags, { id: CHEAP, title: `до ${CHEAP_PRICE} ₽` }] : tags;
+}
+
+function fitsOccasion(item, occasion) {
+  if (!occasion) return true;
+  if (occasion === CHEAP) return Boolean(item.price) && item.price <= CHEAP_PRICE;
+  return item.occasions.includes(occasion);
+}
+
+export default function Catalog({ initialSection = 'all', initialOccasion = '' }) {
   // Товары — из базы; Марина добавляет их в админке (/admin)
   const { status, items: products } = useProducts();
   const { status: categoriesStatus, items: categories } = useCategories();
@@ -34,6 +59,10 @@ export default function Catalog({ initialSection = 'all' }) {
   // Раздела из адреса может не быть (удалили) — тогда «Все»
   const activeTab = tabs.find((tab) => tab.id === active) ?? tabs[0];
   const [query, setQuery] = useState('');
+  const occasions = useMemo(() => makeOccasions(products), [products]);
+  const [occasion, setOccasion] = useState(initialOccasion);
+  // Метку из адреса могли убрать у всех изделий — тогда без подборки
+  const activeOccasion = occasions.some((item) => item.id === occasion) ? occasion : '';
   // Сколько раз выбирали раздел — плашка сверху каждый раз берёт следующий факт
   const [turn, setTurn] = useState(0);
 
@@ -50,9 +79,9 @@ export default function Catalog({ initialSection = 'all' }) {
     return products.filter((item) => {
       const byCategory = activeTab.id === 'all' || item.category === activeTab.id;
       const byQuery = !needle || item.title.toLowerCase().includes(needle);
-      return byCategory && byQuery;
+      return byCategory && byQuery && fitsOccasion(item, activeOccasion);
     });
-  }, [products, activeTab.id, query]);
+  }, [products, activeTab.id, query, activeOccasion]);
 
   const searching = query.trim() !== '';
   const loading = status === 'idle' || status === 'loading';
@@ -75,6 +104,26 @@ export default function Catalog({ initialSection = 'all' }) {
 
         <CategoryTabs tabs={tabs} active={activeTab.id} onChange={pick} />
 
+        {occasions.length > 0 && (
+          <div className="occasions" role="group" aria-label="Подборки по поводу">
+            <span className="occasions__label">Подарок:</span>
+            {occasions.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className="occasions__chip"
+                aria-pressed={activeOccasion === item.id}
+                onClick={() => {
+                  emitMotion();
+                  setOccasion((current) => (current === item.id ? '' : item.id));
+                }}
+              >
+                {item.title}
+              </button>
+            ))}
+          </div>
+        )}
+
         {loading && <p className="catalog__loading">Загружаем изделия…</p>}
         {status === 'error' && (
           <p className="catalog__loading">
@@ -92,7 +141,15 @@ export default function Catalog({ initialSection = 'all' }) {
 
         {status === 'ready' && visible.length === 0 && (
           <div className="catalog__soon">
-            {searching ? (
+            {activeOccasion && !searching ? (
+              <>
+                <p className="catalog__soon-title">В этом разделе такого пока нет</p>
+                <p>
+                  Посмотрите подборку во всех разделах или закажите своё — распишем под человека и
+                  повод.
+                </p>
+              </>
+            ) : searching ? (
               <>
                 <p className="catalog__soon-title">«{query.trim()}» пока не нашлось</p>
                 <p>

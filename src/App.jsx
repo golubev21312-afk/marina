@@ -18,6 +18,7 @@ const pages = {
   order: () => import('./pages/OrderPage'),
   product: () => import('./pages/ProductPage'),
   privacy: () => import('./pages/PrivacyPage'),
+  favorites: () => import('./pages/FavoritesPage'),
 };
 const Scenario = lazy(pages.scenario);
 const CatalogPage = lazy(pages.catalog);
@@ -25,6 +26,7 @@ const AboutPage = lazy(pages.about);
 const OrderPage = lazy(pages.order);
 const ProductPage = lazy(pages.product);
 const PrivacyPage = lazy(pages.privacy);
+const FavoritesPage = lazy(pages.favorites);
 const AdminPage = lazy(() => import('./admin/AdminPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const PasswordResetPage = lazy(() => import('./admin/PasswordReset'));
@@ -51,6 +53,7 @@ const TITLES = {
   '/about': 'О мастерской «Крафт»',
   '/order': 'Индивидуальный заказ — мастерская «Крафт»',
   '/privacy': 'Политика обработки персональных данных — «Крафт»',
+  '/otlozhennye': 'Отложенные изделия — мастерская «Крафт»',
 };
 
 /**
@@ -93,6 +96,7 @@ export default function App() {
                 <Route path="/order" element={<OrderPage />} />
                 <Route path="/izdelie/:id" element={<ProductPage />} />
                 <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/otlozhennye" element={<FavoritesPage />} />
                 <Route path="/admin" element={<AdminPage />} />
                 <Route path="/admin/reset/:token" element={<PasswordResetPage />} />
                 <Route path="*" element={<NotFoundPage />} />

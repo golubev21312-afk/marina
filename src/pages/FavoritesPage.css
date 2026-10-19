@@ -1,0 +1,48 @@
+.favorites {
+  padding-block: clamp(30px, 4vw, 56px) clamp(60px, 9vw, 110px);
+}
+
+.favorites h1 {
+  font-size: clamp(30px, 4vw, 46px);
+}
+
+.favorites__lead {
+  max-width: 60ch;
+  margin-top: 10px;
+  color: var(--ink-soft);
+}
+
+.favorites__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 22px;
+  margin-top: 22px;
+}
+
+.favorites__clear {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.favorites__clear:hover {
+  color: var(--pine-dark);
+}
+
+.favorites__empty {
+  max-width: 56ch;
+  margin-top: 14px;
+  color: var(--ink-soft);
+}
+
+.favorites__empty .product-missing__back {
+  margin-top: 20px;
+}

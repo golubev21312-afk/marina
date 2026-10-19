@@ -6,6 +6,7 @@ import VkConfirm from '../components/VkConfirm';
 import { TransitionLink } from '../transition/Transition';
 import { useProducts } from '../lib/products';
 import { useCategories } from '../lib/categories';
+import { useFavorites } from '../lib/favorites';
 import './SiteMenu.css';
 
 const VK_DIALOG = 'https://vk.me/craftthandmade';
@@ -22,6 +23,8 @@ export default function SiteMenu() {
   // Счётчики — по товарам из базы
   const { items: products } = useProducts();
   const { items: categories } = useCategories();
+  // Отложенные — пункт меню появляется, только когда что-то отложено
+  const favorites = useFavorites().filter((id) => products.some((product) => product.id === id));
   const sections = categories.map((category) => ({
     ...category,
     count: products.filter((product) => product.category === category.slug).length,
@@ -117,6 +120,13 @@ export default function SiteMenu() {
             </ul>
           </div>
         </div>
+
+        {favorites.length > 0 && (
+          <TransitionLink className="site-menu__link site-menu__fav" to="/otlozhennye">
+            Отложенные
+            <span>{favorites.length}</span>
+          </TransitionLink>
+        )}
 
         {LINKS.map((link) =>
           link.to ? (

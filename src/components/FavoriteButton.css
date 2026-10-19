@@ -1,0 +1,52 @@
+/* Сердечко «Отложить» — круглая стеклянная кнопка; отложено — залито акцентом */
+.fav {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--glass-border);
+  border-radius: 50%;
+  background: var(--glass-strong);
+  box-shadow: 0 6px 14px -8px rgba(var(--shadow-rgb), 0.6);
+  color: var(--pine-dark);
+  cursor: pointer;
+  transition:
+    scale 0.2s ease,
+    color 0.2s ease;
+}
+
+.fav:hover {
+  scale: 1.08;
+}
+
+.fav:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.fav svg {
+  width: 20px;
+  height: 20px;
+  fill: transparent;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linejoin: round;
+  transition: fill 0.2s ease;
+}
+
+.fav.is-saved {
+  color: var(--rust);
+}
+
+.fav.is-saved svg {
+  fill: currentColor;
+}
+
+/* На карточке — в правом верхнем углу фото (слева — плашки наличия) */
+.fav--card {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 2;
+}

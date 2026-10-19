@@ -47,12 +47,18 @@ test('товар: добавить с фото, в каталоге, налич�
   await page.getByPlaceholder('Что это за изделие, для кого, чем особенное').fill('Проверка добавления товара.');
   await page.getByPlaceholder('Пусто — «цена по запросу»').fill('990');
   await page.locator('.admin-field').filter({ hasText: 'Раздел' }).locator('select').selectOption({ index: 1 });
+  await page.getByPlaceholder('Например, высота 12 см').fill('высота 15 см');
+  await page.getByRole('button', { name: '+ учителю' }).click();
+  await page.getByPlaceholder('Например, учителю — и Enter').fill('на юбилей');
+  await page.getByPlaceholder('Например, учителю — и Enter').press('Enter');
   await page.getByRole('button', { name: 'Сохранить' }).click();
   await expect(page.getByText('Товар добавлен — он уже на сайте.')).toBeVisible({ timeout: 20_000 });
 
   const [saved] = (await (await adminApi(request)).list('products', "&filter=(title='Ангел из автотеста')"));
   expect(saved.photos).toHaveLength(1);
   expect(saved.price).toBe(990);
+  expect(saved.size).toBe('высота 15 см');
+  expect(saved.occasions).toEqual(['учителю', 'на юбилей']);
 
   const row = page.locator('.admin-item').filter({ hasText: 'Ангел из автотеста' });
   await row.getByLabel('Наличие').selectOption('to_order');
@@ -85,6 +91,7 @@ test('товар: добавить с фото, в каталоге, налич�
   expect(copy.photos).toHaveLength(1);
   expect(copy.price).toBe(990);
   expect(copy.stock).toBe('to_order');
+  expect(copy.occasions).toEqual(['учителю', 'на юбилей']);
   const [original] = await api.list('products', `&filter=(id='${saved.id}')`);
   expect(original.photos).toEqual(saved.photos);
   await api.remove('products', copy.id);
@@ -110,9 +117,15 @@ test('раздел с товаром: «Нет» отменяет, без отв
   await login(page);
   await page.getByRole('tab', { name: /Разделы/ }).click();
   const row = page.locator('.admin-item--category').filter({ has: page.getByText('Раздел под снос', { exact: true }) });
+  await expect(row).toBeVisible();
+  // Часы страницы стоят: отсчёт идёт только по runFor, а не пока медленный
+  // браузер ищет кнопку (иначе раздел успевал удалиться сам до «Нет»)
+  await page.clock.pauseAt(Date.now() + 1000);
 
   await row.getByRole('button', { name: 'Удалить' }).click();
   await expect(row.getByText(/Удалится сам через 30 с/)).toBeVisible();
+  // Число товаров приходит из базы чуть позже — строка перестраивается; ждём
+  await expect(row.locator('select')).toBeVisible();
   await row.getByRole('button', { name: 'Нет' }).click();
   await page.clock.runFor(35_000);
   await expect(row).toBeVisible();

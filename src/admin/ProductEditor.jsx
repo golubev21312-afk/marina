@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { useCategories } from '../lib/categories';
-import { STOCK, useProducts } from '../lib/products';
+import { DEFAULT_MATERIAL, STOCK, useProducts } from '../lib/products';
 import { shrinkImage } from './shrinkImage';
 
 let localId = 0;
@@ -11,6 +11,66 @@ const WEB_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
 
 /** Столько фото база принимает у одного товара. */
 const MAX_PHOTOS = 10;
+
+/** Поводы-подсказки, пока своих мало: Марина нажимает — метка добавляется. */
+const STARTER_OCCASIONS = ['учителю', 'врачу', 'ребёнку', 'маме', 'коллеге', 'на свадьбу', 'на Новый год'];
+
+/** Поводы: метки-«пилюли» с ×, поле для своей и подсказки одним нажатием. */
+function OccasionsField({ value, onChange, known }) {
+  const [draft, setDraft] = useState('');
+  const has = (name) => value.some((item) => item.toLowerCase() === name.toLowerCase());
+  const add = (raw) => {
+    const name = raw.trim().replace(/\s+/g, ' ').slice(0, 40);
+    if (name && !has(name)) onChange([...value, name]);
+    setDraft('');
+  };
+  const suggestions = [...new Set([...known, ...STARTER_OCCASIONS])].filter((name) => !has(name)).slice(0, 12);
+
+  return (
+    <div className="admin-field">
+      <span className="admin-label">Кому подойдёт в подарок — необязательно</span>
+      {value.length > 0 && (
+        <div className="admin-tags">
+          {value.map((name) => (
+            <span key={name} className="admin-tag">
+              {name}
+              <button
+                type="button"
+                aria-label={`Убрать «${name}»`}
+                onClick={() => onChange(value.filter((item) => item !== name))}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+      <input
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ',') {
+            e.preventDefault();
+            add(draft);
+          }
+        }}
+        onBlur={() => draft.trim() && add(draft)}
+        placeholder="Например, учителю — и Enter"
+        maxLength={40}
+      />
+      {suggestions.length > 0 && (
+        <div className="admin-tags admin-tags--suggest">
+          {suggestions.map((name) => (
+            <button key={name} type="button" className="admin-tag admin-tag--add" onClick={() => add(name)}>
+              + {name}
+            </button>
+          ))}
+        </div>
+      )}
+      <small className="admin-hint">В каталоге по этим словам появятся подборки «Подарок: учителю…».</small>
+    </div>
+  );
+}
 
 /** Подсказка под выбором наличия — что увидит посетитель. */
 const STOCK_HINT = {
@@ -34,6 +94,12 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
   const { items: products } = useProducts();
   const [category, setCategory] = useState(base?.categoryId ?? '');
   const [stock, setStock] = useState(base?.stock ?? 'in_stock');
+  const [occasions, setOccasions] = useState(base?.occasions ?? []);
+  const [leadTime, setLeadTime] = useState(base?.leadTime ?? '');
+  const [material, setMaterial] = useState(base?.material ?? '');
+  const [size, setSize] = useState(base?.size ?? '');
+  // Поводы других изделий — в подсказки, чтобы метки писались одинаково
+  const knownOccasions = [...new Set(products.flatMap((item) => item.occasions))];
   const [photos, setPhotos] = useState(() =>
     (product?.files ?? []).map((name, i) => ({ key: `old-${name}`, kind: 'old', name, preview: product.small[i] })),
   );
@@ -127,6 +193,10 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
       data.append('price', price ? String(Math.round(Number(price))) : '0');
       data.append('category', category);
       data.append('stock', stock);
+      data.append('occasions', JSON.stringify(occasions));
+      data.append('lead_time', leadTime.trim());
+      data.append('material', material.trim());
+      data.append('size', size.trim());
 
       const newOnes = photos.filter((p) => p.kind === 'new');
       let record;
@@ -275,6 +345,37 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
         </select>
         <small className="admin-hint">{STOCK_HINT[stock]}</small>
       </label>
+
+      {stock !== 'in_stock' && (
+        <label className="admin-field">
+          <span className="admin-label">Срок изготовления — необязательно</span>
+          <input
+            value={leadTime}
+            onChange={(e) => setLeadTime(e.target.value)}
+            placeholder="Например, 7–10 дней"
+            maxLength={60}
+          />
+          <small className="admin-hint">Посетитель увидит: «Мастер сделает его для вас за 7–10 дней».</small>
+        </label>
+      )}
+
+      <div className="admin-row">
+        <label className="admin-field">
+          <span className="admin-label">Материал — необязательно</span>
+          <input
+            value={material}
+            onChange={(e) => setMaterial(e.target.value)}
+            placeholder={`Пусто — «${DEFAULT_MATERIAL}»`}
+            maxLength={120}
+          />
+        </label>
+        <label className="admin-field">
+          <span className="admin-label">Размер — необязательно</span>
+          <input value={size} onChange={(e) => setSize(e.target.value)} placeholder="Например, высота 12 см" maxLength={60} />
+        </label>
+      </div>
+
+      <OccasionsField value={occasions} onChange={setOccasions} known={knownOccasions} />
 
       {error && <p className="admin-error">{error}</p>}
 
