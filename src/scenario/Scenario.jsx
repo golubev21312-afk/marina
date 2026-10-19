@@ -56,7 +56,7 @@ export default function Scenario() {
       <div ref={countdownRef} className="scenario__countdown" />
 
       {/* Украшения первого экрана. «Белая»: две разные матрёшки по краям,
-          смотрят к центру. «Малахит»: Хозяйка Медной горы слева */}
+          смотрят к центру. «Малахит»: Хозяйка Медной горы слева, матрёшка с ромашками справа */}
       <div className={`decor-intro ${scene === 0 ? 'is-on' : ''}`} aria-hidden="true">
         {/* Только украшения текущей темы: скрытая CSS-ом картинка всё равно скачивается */}
         {theme === 'kraft' ? (
@@ -67,7 +67,8 @@ export default function Scenario() {
         ) : (
           <>
             <img className="decor decor--malachite decor-intro__mat decor-intro__mat--left" src="/img/decor-hozyayka-faces-right.webp" alt="" />
-            {/* Справа была пластина с ящеркой (убрана 19.10) — место под новое украшение, класс decor-intro__lizard */}
+            {/* Справа — матрёшка с ромашками (Андрей, 19.10; раньше — пластина с ящеркой), смотрит к центру */}
+            <img className="decor decor--malachite decor-intro__doll" src="/img/decor-romashka-faces-left.webp" alt="" />
           </>
         )}
       </div>
@@ -77,7 +78,7 @@ export default function Scenario() {
       </div>
 
       {/* Фото карусели — после модели: на медленном интернете не отнимают у неё скорость */}
-      <Showcase shown={showcaseShown} photos={started} />
+      <Showcase shown={showcaseShown} photos={started} theme={theme} />
 
       <div className="scenario__controls">
         <button

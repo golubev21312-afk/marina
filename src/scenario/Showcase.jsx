@@ -6,7 +6,7 @@ import { emitMotion } from '../lib/motion';
 import './Showcase.css';
 
 /** Финальная сцена: карусель изделий с историями на обороте. */
-export default function Showcase({ shown, photos }) {
+export default function Showcase({ shown, photos, theme }) {
   const ITEMS = useShowcaseItems();
   const [picked, setActive] = useState(0);
   const [flipped, setFlipped] = useState(null);
@@ -83,7 +83,11 @@ export default function Showcase({ shown, photos }) {
 
       <p className="showcase__note">Актуальные цены — в каталоге</p>
 
-      {/* Здесь в «Малахите» была пластина с ящеркой (убрана 19.10) — место под новое украшение, класс decor-show */}
+      {/* «Малахит»: матрёшка с ромашками слева внизу, смотрит к карусели.
+          Только в своей теме — скрытая CSS-ом картинка всё равно скачивается */}
+      {theme === 'malachite' && (
+        <img className="decor decor--malachite decor-show" src="/img/decor-romashka-faces-right.webp" alt="" aria-hidden="true" />
+      )}
     </div>
   );
 }

@@ -171,7 +171,8 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
             </TransitionLink>
           </div>
         )}
-        {/* Была пластина с ящеркой («Малахит», убрана 19.10) — место под новое украшение, класс decor-catalog */}
+        {/* «Малахит»: матрёшка с ромашками под каталогом; lazy — в другой теме не скачивается */}
+        <img className="decor decor--malachite decor-catalog" src="/img/decor-romashka-faces-left.webp" alt="" aria-hidden="true" loading="lazy" />
       </div>
     </section>
   );

@@ -1,6 +1,8 @@
 /*
  * Украшения тем — заранее отрендеренные 3D-модели (картинки с прозрачным
- * фоном): пластина с ящеркой в короне для «Малахита», матрёшки для «Белой».
+ * фоном): матрёшка с ромашками и Хозяйка для «Малахита», матрёшки для «Белой».
+ * Матрёшка с ромашками (19.10) встала на места прежней пластины с ящеркой;
+ * она почти квадратная, поэтому размер задан высотой.
  * Каждое видно только в своей теме, клики сквозь них проходят.
  */
 .decor {
@@ -48,11 +50,12 @@
   opacity: 1;
 }
 
-.decor-intro__lizard {
+.decor-intro__doll {
   position: absolute;
   right: clamp(12px, 3.5vw, 64px);
   bottom: clamp(74px, 12vh, 130px);
-  width: clamp(150px, 17vw, 280px);
+  width: auto;
+  height: clamp(150px, 24vh, 240px);
 }
 
 /* Матрёшки по краям, по высоте — чуть ниже середины */
@@ -79,7 +82,8 @@
   left: clamp(12px, 3vw, 56px);
   bottom: clamp(64px, 9vh, 96px);
   z-index: 1;
-  width: clamp(120px, 13vw, 220px);
+  width: auto;
+  height: clamp(110px, 17vh, 180px);
   transition: opacity 0.4s ease;
 }
 
@@ -89,16 +93,20 @@
 
 /* ---------- каталог ---------- */
 .decor-catalog {
-  width: clamp(200px, 30vw, 320px);
+  width: auto;
+  height: clamp(170px, 22vw, 240px);
   margin: 36px auto 0;
 }
 
 /* ---------- индивидуальный заказ ---------- */
+/* Внизу справа, на уровне кнопки «Написать в ВК» — выше не поднимается,
+   текст свободен (за край нельзя: у блока своя прокрутка) */
 .decor-order {
   position: absolute;
   right: 14px;
-  bottom: 12px;
-  width: clamp(110px, 11vw, 160px);
+  bottom: 10px;
+  width: auto;
+  height: clamp(76px, 6.6vw, 96px);
 }
 
 /* ---------- планшет и телефон ---------- */
@@ -125,22 +133,22 @@
     --mat-h: 13vh;
   }
 
-  /* Текст первого экрана на телефоне доходит почти до низа — ящерка в самом углу */
-  .decor-intro__lizard {
-    width: 108px;
+  /* Текст первого экрана на телефоне доходит почти до низа — матрёшка в самом углу */
+  .decor-intro__doll {
+    height: 110px;
     right: 4px;
     bottom: 6px;
   }
 
   /* В карусели — в углу рядом с точками, не на строке про цены */
   .decor-show {
-    width: 84px;
+    height: 86px;
     left: 6px;
     bottom: 8px;
   }
 
   .decor-order {
-    width: 92px;
+    height: 72px;
     right: 10px;
     bottom: 10px;
   }

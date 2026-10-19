@@ -110,7 +110,8 @@ export default function OrderPage() {
         <button type="button" className="order-card__cta" onClick={() => setConfirming(true)}>
           Написать в ВК
         </button>
-        {/* Была пластина с ящеркой («Малахит», убрана 19.10) — место под новое украшение, класс decor-order */}
+        {/* «Малахит»: матрёшка с ромашками в углу блока заказа; lazy — в другой теме не скачивается */}
+        <img className="decor decor--malachite decor-order" src="/img/decor-romashka-faces-left.webp" alt="" aria-hidden="true" loading="lazy" />
       </aside>
 
       <BackHome />
