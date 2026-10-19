@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { useCategories } from '../lib/categories';
-import { useProducts } from '../lib/products';
+import { STOCK, useProducts } from '../lib/products';
 import { shrinkImage } from './shrinkImage';
 
 let localId = 0;
@@ -11,6 +11,13 @@ const WEB_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
 
 /** Столько фото база принимает у одного товара. */
 const MAX_PHOTOS = 10;
+
+/** Подсказка под выбором наличия — что увидит посетитель. */
+const STOCK_HINT = {
+  in_stock: 'Изделие есть, его можно купить.',
+  to_order: 'На карточке будет плашка «Под заказ»: мастер сделает такое же.',
+  sold_out: 'Изделие останется в каталоге с пометкой «нет в наличии» — его можно заказать похожим.',
+};
 
 /**
  * Форма товара: добавить новый или изменить существующий.
@@ -24,7 +31,7 @@ export default function ProductEditor({ product, onSaved, onCancel }) {
   const { items: categories } = useCategories();
   const { items: products } = useProducts();
   const [category, setCategory] = useState(product?.categoryId ?? '');
-  const [available, setAvailable] = useState(product?.available ?? true);
+  const [stock, setStock] = useState(product?.stock ?? 'in_stock');
   const [photos, setPhotos] = useState(() =>
     (product?.files ?? []).map((name, i) => ({ key: `old-${name}`, kind: 'old', name, preview: product.small[i] })),
   );
@@ -94,7 +101,7 @@ export default function ProductEditor({ product, onSaved, onCancel }) {
       data.append('description', description.trim());
       data.append('price', price ? String(Math.round(Number(price))) : '0');
       data.append('category', category);
-      data.append('available', String(available));
+      data.append('stock', stock);
 
       const newOnes = photos.filter((p) => p.kind === 'new');
       let record;
@@ -226,18 +233,17 @@ export default function ProductEditor({ product, onSaved, onCancel }) {
         </label>
       </div>
 
-      <div className="admin-field">
-        <label className="admin-toggle">
-          <input type="checkbox" checked={available} onChange={(e) => setAvailable(e.target.checked)} />
-          <span className="admin-toggle__track" aria-hidden="true" />
-          {available ? 'В наличии' : 'Нет в наличии'}
-        </label>
-        <small className="admin-hint">
-          {available
-            ? 'Изделие есть, его можно купить.'
-            : 'Изделие останется в каталоге с пометкой «нет в наличии» — его можно заказать похожим.'}
-        </small>
-      </div>
+      <label className="admin-field">
+        <span className="admin-label">Наличие</span>
+        <select value={stock} onChange={(e) => setStock(e.target.value)}>
+          {Object.entries(STOCK).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <small className="admin-hint">{STOCK_HINT[stock]}</small>
+      </label>
 
       {error && <p className="admin-error">{error}</p>}
 

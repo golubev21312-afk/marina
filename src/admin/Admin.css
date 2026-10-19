@@ -246,7 +246,7 @@
 }
 
 .admin-item__info strong {
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Lora', Georgia, serif;
   font-size: 17px;
   color: var(--pine-dark);
 }
@@ -267,6 +267,12 @@
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
+}
+
+.admin .admin-stock {
+  width: auto;
+  padding: 7px 10px;
+  font-size: 14px;
 }
 
 .admin-item__ask {
@@ -563,6 +569,25 @@
 .admin-order button:disabled {
   opacity: 0.3;
   cursor: default;
+}
+
+/* Удаление раздела: предупреждение с отсчётом и выбором, куда перенести товары */
+.admin-countdown {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  max-width: 460px;
+}
+
+.admin-countdown .admin-item__ask {
+  line-height: 1.6;
+}
+
+.admin .admin-countdown select {
+  width: auto;
+  padding: 4px 8px;
 }
 
 .admin-editor--compact {

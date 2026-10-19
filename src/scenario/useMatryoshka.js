@@ -4,6 +4,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { MeshoptDecoder } from 'three/addons/libs/meshopt_decoder.module.js';
+import { reportError } from '../lib/errors';
 import { useTheme } from '../theme/theme';
 
 /**
@@ -15,6 +16,12 @@ const MODELS = {
   kraft: { url: '/matryoshka.glb', faceAngle: 290, env: 0 },
   malachite: { url: '/matryoshka-malachite.glb', faceAngle: 290, env: 0.55 },
 };
+
+/**
+ * Сколько ждём первую модель. Дольше — считаем, что телефон не тянет
+ * или сеть не даёт: сайт идёт дальше без 3D, сразу к карусели.
+ */
+const LOAD_TIMEOUT_MS = 25000;
 
 /** Высота матрёшки в сцене — под неё подгоняется модель любого размера. */
 const DOLL_HEIGHT = 3.4;
@@ -56,6 +63,9 @@ function disposeTree(root) {
  * Модель берётся по теме; при смене темы меняется на лету — старая стоит,
  * пока грузится новая, экран загрузки второй раз не показывается.
  *
+ * failed — 3D не будет: нет WebGL, модель не загрузилась или грузится
+ * дольше LOAD_TIMEOUT_MS. Страницы тогда показывают всё без матрёшки.
+ *
  * progress — 0..1, насколько матрёшка собрана:
  *   0.00–0.45  детали слетаются, матрёшка собирается
  *   0.45–0.60  стоит целая
@@ -94,9 +104,25 @@ export function useMatryoshka(canvasRef) {
       100,
     );
 
+    // Без 3D — сразу дальше. Состояние меняем после эффекта, не внутри него
+    const giveUp = (reason, error) => {
+      if (cancelled) return;
+      if (error) reportError(error, reason);
+      Promise.resolve().then(() => !cancelled && setFailed(true));
+    };
+
     // Холст прозрачный: фон сцены даёт тема (--stage-bg) — в «Малахите»
-    // матрёшка стоит прямо на камне
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    // матрёшка стоит прямо на камне. Нет WebGL (старый телефон, выключено
+    // в браузере) — three.js бросает ошибку
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    } catch (error) {
+      giveUp('нет WebGL', error);
+      return () => {
+        cancelled = true;
+      };
+    }
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.enabled = true;
@@ -262,7 +288,7 @@ export function useMatryoshka(canvasRef) {
         (error) => {
           if (cancelled) return;
           console.error('Матрёшка не загрузилась', error);
-          if (first) setFailed(true);
+          if (first) giveUp('матрёшка не загрузилась', error);
         },
       );
     }
@@ -357,8 +383,12 @@ export function useMatryoshka(canvasRef) {
 
     sceneRef.current = { load };
 
+    // Модель так и не пришла — не держим человека на экране загрузки
+    const timeout = setTimeout(() => !parts && giveUp(), LOAD_TIMEOUT_MS);
+
     return () => {
       cancelled = true;
+      clearTimeout(timeout);
       sceneRef.current = null;
       setReady(false);
       handle.render = () => {};

@@ -3,8 +3,9 @@ import { useParams } from 'react-router-dom';
 import Gallery from '../components/Gallery';
 import VkConfirm from '../components/VkConfirm';
 import { TransitionLink } from '../transition/Transition';
+import { copyText } from '../lib/clipboard';
 import { formatPrice } from '../lib/format';
-import { useProducts } from '../lib/products';
+import { STOCK, useProducts } from '../lib/products';
 import { useCategories } from '../lib/categories';
 import './Product.css';
 
@@ -16,6 +17,8 @@ export default function Product() {
   const { status, items } = useProducts();
   const { items: categories } = useCategories();
   const [confirming, setConfirming] = useState(false);
+  // Копирование ссылки — начатое прямо по нажатию «Заказать» (см. VkConfirm)
+  const [copying, setCopying] = useState(null);
   const close = useCallback(() => setConfirming(false), []);
   const product = items.find((item) => item.id === id);
 
@@ -50,6 +53,9 @@ export default function Product() {
 
   const category = categories.find((item) => item.slug === product.category);
 
+  // Готовое сообщение мастеру: ВК не умеет открывать диалог с текстом
+  const orderText = `Здравствуйте! Хочу заказать «${product.title}»: ${window.location.origin}/izdelie/${product.id}`;
+
   return (
     <article className="wrap product appear">
       <div className="product__media">
@@ -63,15 +69,24 @@ export default function Product() {
           </TransitionLink>
         )}
         <h1>{product.title}</h1>
-        {!product.available && <span className="product__sold-badge">Нет в наличии</span>}
+        {product.stock === 'sold_out' && <span className="product__sold-badge">{STOCK.sold_out}</span>}
+        {product.stock === 'to_order' && <span className="product__to-order-badge">{STOCK.to_order}</span>}
         {product.description && <p className="product__lead">{product.description}</p>}
 
         <div className="product__price">
           {product.price ? formatPrice(product.price) : 'Цена — по запросу'}
-          {!product.available && <span className="product__sold">Можно заказать похожее — мастер сделает на заказ</span>}
+          {product.stock === 'sold_out' && <span className="product__sold">Можно заказать похожее — мастер сделает на заказ</span>}
+          {product.stock === 'to_order' && <span className="product__sold">Мастер сделает его для вас — срок подскажет в ВК</span>}
         </div>
 
-        <button type="button" className="product__order" onClick={() => setConfirming(true)}>
+        <button
+          type="button"
+          className="product__order"
+          onClick={() => {
+            setCopying(copyText(orderText));
+            setConfirming(true);
+          }}
+        >
           Заказать в ВК
         </button>
 
@@ -87,7 +102,9 @@ export default function Product() {
         </dl>
       </div>
 
-      {confirming && <VkConfirm href={VK_DIALOG} onClose={close} />}
+      {confirming && (
+        <VkConfirm href={VK_DIALOG} onClose={close} copy={orderText} copying={copying} />
+      )}
     </article>
   );
 }

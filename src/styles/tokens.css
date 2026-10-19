@@ -71,10 +71,10 @@
  * заголовки. Отдельные украшения — в malachite.css.
  */
 :root[data-theme='malachite'] {
-  --cream: #0a241d;
-  --cream-soft: rgba(13, 44, 35, 0.78);
-  --paper: #10352b;
-  --paper-deep: #0a2820;
+  --cream: #0f3328;
+  --cream-soft: rgba(17, 54, 43, 0.78);
+  --paper: #154236;
+  --paper-deep: #0f3328;
   --ink: #e2ece5;
   --ink-soft: #a3bfb2;
   --pine: #cfe3d6;
@@ -115,20 +115,20 @@
   /* Камень под тёмной вуалью, сверху — тёплый отсвет меди, как свет в штольне */
   --page-bg:
     radial-gradient(120% 70% at 50% -10%, rgba(220, 143, 85, 0.16), transparent 62%),
-    radial-gradient(90% 60% at 50% 110%, rgba(2, 10, 7, 0.7), transparent 70%),
-    linear-gradient(rgba(4, 22, 16, 0.64), rgba(4, 22, 16, 0.74)),
+    radial-gradient(90% 60% at 50% 110%, rgba(2, 10, 7, 0.45), transparent 70%),
+    linear-gradient(rgba(6, 30, 22, 0.4), rgba(6, 30, 22, 0.5)),
     url('/textures/malachite.webp') center / 900px repeat,
-    #0a241d;
+    #0f3328;
   /* Сцены (главная, заказ): текст стоит прямо на камне — вуаль плотнее,
      в центре тёмный ореол под надписями */
   --stage-bg:
-    radial-gradient(60% 55% at 50% 45%, rgba(3, 18, 13, 0.55), transparent 75%),
+    radial-gradient(60% 55% at 50% 45%, rgba(3, 18, 13, 0.5), transparent 75%),
     radial-gradient(120% 70% at 50% -10%, rgba(220, 143, 85, 0.14), transparent 62%),
-    linear-gradient(rgba(4, 22, 16, 0.72), rgba(4, 22, 16, 0.8)),
+    linear-gradient(rgba(6, 30, 22, 0.5), rgba(6, 30, 22, 0.6)),
     url('/textures/malachite.webp') center / 900px repeat,
-    #0a241d;
+    #0f3328;
   --mark-bg: #05170f;
-  --theme-color: #0a241d;
+  --theme-color: #0f3328;
 
   color-scheme: dark;
 }
@@ -152,7 +152,7 @@ body {
   margin: 0;
   background: var(--page-bg);
   color: var(--ink);
-  font-family: 'Karla', system-ui, sans-serif;
+  font-family: 'Golos Text', system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -163,7 +163,7 @@ h2,
 h3,
 h4 {
   margin: 0;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Lora', Georgia, serif;
   font-weight: 600;
   color: var(--pine-dark);
   letter-spacing: -0.01em;

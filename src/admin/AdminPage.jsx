@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { pb } from '../lib/pb';
-import { refreshProducts, toProduct, useProducts } from '../lib/products';
+import { refreshProducts, STOCK, useProducts } from '../lib/products';
 import { formatPrice } from '../lib/format';
 import { useCategories } from '../lib/categories';
 import CategoriesPanel from './CategoriesPanel';
@@ -125,11 +125,11 @@ export default function AdminPage() {
       setNotice({ text: `«${product.title}» удалён.` });
     });
 
-  const toggleAvailable = (product) =>
+  const setStock = (product, stock) =>
     run('сохранить', async () => {
-      const record = await pb.collection('products').update(product.id, { available: !product.available });
+      await pb.collection('products').update(product.id, { stock });
       await refreshProducts();
-      setNotice({ text: toProduct(record).available ? 'Отмечено: в наличии.' : 'Отмечено: нет в наличии.' });
+      setNotice({ text: `«${product.title}»: ${STOCK[stock].toLowerCase()}.` });
     });
 
   const move = (index, delta) =>
@@ -292,7 +292,7 @@ export default function AdminPage() {
                     <span>
                       {categoryTitle(product.categoryId)} · {product.price ? formatPrice(product.price) : 'цена по запросу'}
                     </span>
-                    {!product.available && <em>нет в наличии</em>}
+                    {product.stock !== 'in_stock' && <em>{STOCK[product.stock].toLowerCase()}</em>}
                   </div>
                   <div className="admin-item__actions">
                     {deleting === product.id ? (
@@ -310,9 +310,19 @@ export default function AdminPage() {
                         <button type="button" className="admin-btn" onClick={() => setEditing(product)}>
                           Изменить
                         </button>
-                        <button type="button" className="admin-btn" disabled={busy} onClick={() => toggleAvailable(product)}>
-                          {product.available ? 'Нет в наличии' : 'Снова в наличии'}
-                        </button>
+                        <select
+                          className="admin-stock"
+                          aria-label="Наличие"
+                          value={product.stock}
+                          disabled={busy}
+                          onChange={(e) => setStock(product, e.target.value)}
+                        >
+                          {Object.entries(STOCK).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
                         <button type="button" className="admin-btn admin-btn--ghost" onClick={() => setDeleting(product.id)}>
                           Удалить
                         </button>

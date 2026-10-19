@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { refreshCategories, slugify, useCategories } from '../lib/categories';
 import { refreshProducts, useProducts } from '../lib/products';
@@ -64,10 +64,84 @@ function CategoryForm({ category, onSave, onCancel }) {
   );
 }
 
+/** Через сколько секунд удаление раздела применяется само, если не нажали «Нет». */
+const DELETE_AFTER_SEC = 30;
+
+/**
+ * Предупреждение об удалении раздела с отсчётом: «Да» — сразу, «Нет» —
+ * отмена, ничего не нажали — через 30 с удаляется. Товары раздела
+ * переезжают в раздел, выбранный здесь же.
+ */
+function DeleteCountdown({ category, others, busy, onConfirm, onCancel }) {
+  const [left, setLeft] = useState(DELETE_AFTER_SEC);
+  const [target, setTarget] = useState(others[0]?.id ?? '');
+  // Сколько товаров переедет — по базе: список в браузере мог не загрузиться
+  const [count, setCount] = useState(null);
+  // Отсчёт вызывает последнюю версию onConfirm с последним выбранным разделом
+  const confirm = useRef(null);
+  useEffect(() => {
+    confirm.current = () => onConfirm(target);
+  });
+
+  useEffect(() => {
+    let alive = true;
+    pb.collection('products')
+      .getList(1, 1, { filter: pb.filter('category = {:id}', { id: category.id }) })
+      .then(({ totalItems }) => alive && setCount(totalItems))
+      .catch(() => alive && setCount(-1)); // не узнали — выбор раздела всё равно покажем
+    return () => {
+      alive = false;
+    };
+  }, [category.id]);
+
+  useEffect(() => {
+    const timer = setInterval(() => setLeft((n) => n - 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (left === 0) confirm.current();
+  }, [left]);
+
+  return (
+    <div className="admin-countdown">
+      <span className="admin-item__ask">
+        Удалить раздел «{category.title}»?
+        {count !== 0 && count !== null && (
+          <>
+            {' '}
+            {count > 0 ? `Его товары (${count} шт.) переедут в раздел` : 'Его товары переедут в раздел'}{' '}
+            <select value={target} onChange={(e) => setTarget(e.target.value)} disabled={busy}>
+              {others.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.title}
+                </option>
+              ))}
+            </select>
+          </>
+        )}{' '}
+        {left > 0 ? `Удалится сам через ${left} с.` : 'Удаляем…'}
+      </span>
+      <button
+        type="button"
+        className="admin-btn admin-btn--danger"
+        disabled={busy || left <= 0}
+        onClick={() => confirm.current()}
+      >
+        Да
+      </button>
+      <button type="button" className="admin-btn" disabled={busy || left <= 0} onClick={onCancel}>
+        Нет
+      </button>
+    </div>
+  );
+}
+
 /**
  * Разделы каталога: добавить, переименовать, поменять порядок, удалить.
  * Адрес раздела (slug) задаётся один раз при создании — ссылки не ломаются
- * при переименовании. Раздел с товарами удалить нельзя.
+ * при переименовании. Товары удаляемого раздела переезжают в другой;
+ * единственный раздел удалить нельзя — товарам некуда деться.
  */
 export default function CategoriesPanel({ onNotice }) {
   const { items: categories } = useCategories();
@@ -106,23 +180,24 @@ export default function CategoriesPanel({ onNotice }) {
     onNotice('Раздел сохранён.');
   };
 
-  // Товары в разделе считаем по базе, а не по списку в браузере: он мог
-  // не загрузиться — тогда раздел казался бы пустым, а база молча отказала бы
-  const remove = (category) =>
+  // Товары раздела берём из базы, а не из списка в браузере: он мог
+  // не загрузиться — тогда часть товаров не переехала бы и база отказала бы
+  const remove = (category, targetId) =>
     run('удалить раздел', async () => {
-      const { totalItems } = await pb
-        .collection('products')
-        .getList(1, 1, { filter: pb.filter('category = {:id}', { id: category.id }) });
-      if (totalItems) {
-        setDeleting(null);
-        await refreshProducts();
-        setError(`В разделе «${category.title}» ${totalItems} шт. — сначала перенесите их в другой раздел.`);
-        return;
-      }
-      await pb.collection('categories').delete(category.id);
       setDeleting(null);
+      const moving = await pb
+        .collection('products')
+        .getFullList({ filter: pb.filter('category = {:id}', { id: category.id }), fields: 'id' });
+      if (moving.length && !targetId) throw new Error('Не выбран раздел для товаров.');
+      for (const { id } of moving) await pb.collection('products').update(id, { category: targetId });
+      await pb.collection('categories').delete(category.id);
       await reload();
-      onNotice(`Раздел «${category.title}» удалён.`);
+      const target = categories.find((c) => c.id === targetId);
+      onNotice(
+        moving.length
+          ? `Раздел «${category.title}» удалён, товары (${moving.length} шт.) перенесены в «${target?.title}».`
+          : `Раздел «${category.title}» удалён.`,
+      );
     });
 
   const move = (index, delta) =>
@@ -174,25 +249,21 @@ export default function CategoriesPanel({ onNotice }) {
               </div>
               <div className="admin-item__actions">
                 {deleting === category.id ? (
-                  count ? (
+                  categories.length < 2 ? (
                     <>
-                      <span className="admin-item__ask">
-                        В разделе {count} шт. — сначала перенесите их в другой раздел
-                      </span>
+                      <span className="admin-item__ask">Это единственный раздел — сначала добавьте другой</span>
                       <button type="button" className="admin-btn" onClick={() => setDeleting(null)}>
                         Понятно
                       </button>
                     </>
                   ) : (
-                    <>
-                      <span className="admin-item__ask">Удалить раздел?</span>
-                      <button type="button" className="admin-btn admin-btn--danger" disabled={busy} onClick={() => remove(category)}>
-                        Да
-                      </button>
-                      <button type="button" className="admin-btn" onClick={() => setDeleting(null)}>
-                        Нет
-                      </button>
-                    </>
+                    <DeleteCountdown
+                      category={category}
+                      others={categories.filter((c) => c.id !== category.id)}
+                      busy={busy}
+                      onConfirm={(targetId) => remove(category, targetId)}
+                      onCancel={() => setDeleting(null)}
+                    />
                   )
                 ) : (
                   <>

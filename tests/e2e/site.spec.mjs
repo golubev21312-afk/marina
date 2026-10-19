@@ -12,7 +12,7 @@ test.beforeAll(async ({ request }) => {
     title: 'Тестовый ангел',
     description: 'Расписной ангел из липы для проверки сайта.',
     price: 1200,
-    available: true,
+    stock: 'in_stock',
     category: category.id,
   });
 });
@@ -33,6 +33,25 @@ test('страницы открываются', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Политика обработки персональных данных' })).toBeVisible();
 });
 
+test('шрифты — свои: ни одного запроса к Google', async ({ page }) => {
+  const outside = [];
+  page.on('request', (r) => /fonts\.(googleapis|gstatic)\.com/.test(r.url()) && outside.push(r.url()));
+  const fonts = [];
+  page.on('response', (r) => r.url().includes('/fonts/') && fonts.push(r.status()));
+  await page.goto('/catalog');
+  await expect(page.getByText('Тестовый ангел')).toBeVisible();
+  await page.evaluate(() => document.fonts.ready);
+  expect(outside).toEqual([]);
+  // Русский текст — фирменными шрифтами, а не запасными
+  const loaded = await page.evaluate(() =>
+    [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/["']/g, '')),
+  );
+  expect(loaded).toContain('Lora');
+  expect(loaded).toContain('Golos Text');
+  expect(fonts.length).toBeGreaterThan(0);
+  expect(fonts.every((status) => status === 200)).toBe(true);
+});
+
 test('главная: загрузка и сборка матрёшки без ошибок', async ({ page }) => {
   const errors = [];
   page.on('pageerror', (e) => errors.push(e.message));
@@ -40,6 +59,47 @@ test('главная: загрузка и сборка матрёшки без �
   await expect(page.locator('.scenario__bar')).toBeAttached();
   await expect(page.locator('.scenario__bar')).not.toBeAttached({ timeout: 30_000 });
   expect(errors).toEqual([]);
+});
+
+// Телефон без WebGL: three.js не может создать холст 3D
+const noWebGL = () => {
+  const original = HTMLCanvasElement.prototype.getContext;
+  HTMLCanvasElement.prototype.getContext = function (type, ...rest) {
+    return /webgl/i.test(type) ? null : original.call(this, type, ...rest);
+  };
+};
+
+test('без WebGL: главная сразу показывает карусель, заказ — блок заказа', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.addInitScript(noWebGL);
+  await page.goto('/?reset');
+  await expect(page.locator('.showcase.is-shown')).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.scenario__loading')).toHaveCount(0);
+  await expect(page.getByText('Что-то пошло не так')).toHaveCount(0);
+
+  await page.goto('/order');
+  await expect(page.locator('.order-card[aria-hidden="false"]')).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByRole('button', { name: 'Написать в ВК' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('«Уменьшить движение»: сцены сменяются без полёта матрёшки', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/?reset');
+  await expect(page.locator('.scenario__loading')).not.toBeAttached({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Следующая сцена' }).click();
+  // Без пятисекундного полёта деталей карусель — сразу
+  await expect(page.locator('.showcase.is-shown')).toBeVisible({ timeout: 1500 });
+  expect(errors).toEqual([]);
+});
+
+test('модель не загрузилась: главная всё равно доходит до карусели', async ({ page }) => {
+  await page.route('**/*.glb', (route) => route.abort());
+  await page.goto('/?reset');
+  await expect(page.locator('.showcase.is-shown')).toBeVisible({ timeout: 10_000 });
 });
 
 test('изделие: страница, заголовок вкладки, «нет такого», 404', async ({ page }) => {
@@ -67,6 +127,21 @@ test('переход в ВК — через предупреждение', async
   await page.getByRole('button', { name: 'Заказать в ВК' }).last().click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toContainText('Переходим во ВКонтакте');
+  await dialog.getByRole('button', { name: 'Остаться на сайте' }).click();
+  await expect(dialog).not.toBeVisible();
+});
+
+test('заказ изделия: ссылка на него копируется для сообщения в ВК', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await blockVk(page);
+  await page.goto(`/izdelie/${product.id}`);
+  // Кнопка на самой странице изделия, не в меню — у меню нет ссылки на изделие
+  await page.locator('.product__order').click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('status')).toContainText('Ссылка на изделие скопирована');
+  const text = await page.evaluate(() => navigator.clipboard.readText());
+  expect(text).toContain('Тестовый ангел');
+  expect(text).toContain(`/izdelie/${product.id}`);
   await dialog.getByRole('button', { name: 'Остаться на сайте' }).click();
   await expect(dialog).not.toBeVisible();
 });

@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { MotionConfig } from 'motion/react';
 import CookieNotice from './components/CookieNotice';
 import ErrorBoundary from './components/ErrorBoundary';
 import Lizards from './components/Lizards';
@@ -76,28 +77,32 @@ function Guarded({ children }) {
 /** Главная — 3D-сценарий; остальные разделы — отдельные страницы, переход «пузырями». */
 export default function App() {
   usePreloadPages();
+  // reducedMotion="user": при «Уменьшить движение» в системе появления
+  // (факты, слайды, шаги) только проступают, без сдвигов
   return (
-    <BrowserRouter>
-      <PageTracker />
-      <TransitionProvider>
-        <Guarded>
-          <Suspense fallback={null}>
-            <Routes>
-              <Route path="/" element={<Scenario />} />
-              <Route path="/catalog" element={<CatalogPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/order" element={<OrderPage />} />
-              <Route path="/izdelie/:id" element={<ProductPage />} />
-              <Route path="/privacy" element={<PrivacyPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="/admin/reset/:token" element={<PasswordResetPage />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
-        </Guarded>
-        <Lizards />
-        <CookieNotice />
-      </TransitionProvider>
-    </BrowserRouter>
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
+        <PageTracker />
+        <TransitionProvider>
+          <Guarded>
+            <Suspense fallback={null}>
+              <Routes>
+                <Route path="/" element={<Scenario />} />
+                <Route path="/catalog" element={<CatalogPage />} />
+                <Route path="/about" element={<AboutPage />} />
+                <Route path="/order" element={<OrderPage />} />
+                <Route path="/izdelie/:id" element={<ProductPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="/admin/reset/:token" element={<PasswordResetPage />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
+          </Guarded>
+          <Lizards />
+          <CookieNotice />
+        </TransitionProvider>
+      </BrowserRouter>
+    </MotionConfig>
   );
 }

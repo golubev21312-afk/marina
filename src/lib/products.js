@@ -6,6 +6,13 @@ import { createStore } from './store';
  * страница товара, админка). Порядок — ручной, Марина задаёт его ↑↓ в админке.
  */
 
+/** Наличие изделия: значение в базе → подпись на сайте и в админке. */
+export const STOCK = {
+  in_stock: 'В наличии',
+  to_order: 'Под заказ',
+  sold_out: 'Нет в наличии',
+};
+
 /** Запись базы → товар в том виде, в каком его ждут компоненты. */
 export function toProduct(record) {
   const url = (file, thumb) => pb.files.getURL(record, file, thumb ? { thumb } : undefined);
@@ -17,7 +24,7 @@ export function toProduct(record) {
     // Раздел: slug — для адресов и фильтра, categoryId — для админки
     category: record.expand?.category?.slug ?? '',
     categoryId: record.category,
-    available: record.available,
+    stock: record.stock || 'in_stock',
     photos: record.photos.map((file) => url(file)),
     thumbs: record.photos.map((file) => url(file, '600x750')),
     small: record.photos.map((file) => url(file, '240x300')),

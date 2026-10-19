@@ -1,18 +1,20 @@
 import { TransitionLink } from '../transition/Transition';
 import { formatPrice } from '../lib/format';
+import { STOCK } from '../lib/products';
 import './ProductCard.css';
 
 export default function ProductCard({ product, index = 0 }) {
   return (
     <TransitionLink
       to={`/izdelie/${product.id}`}
-      className={`card ${product.available ? '' : 'is-sold'}`}
+      className={`card ${product.stock === 'sold_out' ? 'is-sold' : ''}`}
       style={{ '--card-index': index }}
     >
       <div className="card__thumb">
         {product.thumbs[0] && <img src={product.thumbs[0]} alt={product.title} loading="lazy" />}
         {product.price && <span className="card__price">{formatPrice(product.price)}</span>}
-        {!product.available && <span className="card__sold">Нет в наличии</span>}
+        {product.stock === 'sold_out' && <span className="card__sold">{STOCK.sold_out}</span>}
+        {product.stock === 'to_order' && <span className="card__to-order">{STOCK.to_order}</span>}
       </div>
       <div className="card__body">
         <h3>{product.title}</h3>

@@ -114,7 +114,7 @@ export default function Catalog({ initialSection = 'all' }) {
             </TransitionLink>
           </div>
         )}
-        <img className="decor decor--malachite decor-catalog" src="/img/lizard-plaque.webp" alt="" aria-hidden="true" />
+        {/* Была пластина с ящеркой («Малахит», убрана 19.10) — место под новое украшение, класс decor-catalog */}
       </div>
     </section>
   );

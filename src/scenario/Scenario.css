@@ -105,7 +105,7 @@
 
 .slide__sub {
   margin-top: 6px;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Lora', Georgia, serif;
   font-style: italic;
   font-weight: 500;
   font-size: clamp(15px, 2vw, 20px);
@@ -130,7 +130,7 @@
 
 .slide__closing {
   margin-top: 20px;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Lora', Georgia, serif;
   font-style: italic;
   font-size: clamp(15px, 1.9vw, 19px);
   line-height: 1.45;

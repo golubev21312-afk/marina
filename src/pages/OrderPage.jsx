@@ -7,7 +7,7 @@ import { useMatryoshka } from '../scenario/useMatryoshka';
 import '../scenario/Scenario.css';
 import BackHome from '../components/BackHome';
 import VkConfirm from '../components/VkConfirm';
-import { emitMotion } from '../lib/motion';
+import { emitMotion, reducedMotion } from '../lib/motion';
 import './OrderPage.css';
 
 const VK_DIALOG = 'https://vk.me/craftthandmade';
@@ -45,12 +45,22 @@ export default function OrderPage() {
     const state = { progress: 0 };
     const tween = gsap.to(state, {
       progress: ASSEMBLED,
-      duration: ASSEMBLE_SEC,
+      duration: reducedMotion() ? 0 : ASSEMBLE_SEC,
       ease: 'sine.inOut',
       onUpdate: () => api.current.render(state.progress),
     });
     return () => tween.kill();
   }, [ready, api]);
+
+  // Без 3D шаги вокруг пустого места ни к чему — сразу блок заказа
+  useEffect(() => {
+    if (!failed || ready || stage !== 'steps') return undefined;
+    const timer = setTimeout(() => {
+      setStage('order');
+      setStepsOn(false);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [failed, ready, stage]);
 
   // Первый показ шагов — и открываем заказ
   useEffect(() => {
@@ -80,7 +90,7 @@ export default function OrderPage() {
     <section className={`scenario order-scene is-${stage} ${stepsOn ? 'steps-on' : ''}`}>
       <canvas ref={canvasRef} className="scenario__canvas order-scene__canvas" />
 
-      {!ready && <LoadingFacts progressPct={progressPct} failed={failed} />}
+      {!ready && !failed && <LoadingFacts progressPct={progressPct} />}
 
       <SiteMenu />
 
@@ -91,7 +101,7 @@ export default function OrderPage() {
       <aside className="order-card" aria-hidden={stage !== 'order'}>
         <span className="order-card__kicker">Индивидуальный заказ</span>
         <h1>
-          Матрёшка, которой <em>нет ни у кого</em>
+          Изделие, которого <em>нет ни у кого</em>
         </h1>
         <p>
           Расскажите, для кого подарок: профессия, увлечения, любимые цвета, питомец.
@@ -100,7 +110,7 @@ export default function OrderPage() {
         <button type="button" className="order-card__cta" onClick={() => setConfirming(true)}>
           Написать в ВК
         </button>
-        <img className="decor decor--malachite decor-order" src="/img/lizard-plaque.webp" alt="" aria-hidden="true" />
+        {/* Была пластина с ящеркой («Малахит», убрана 19.10) — место под новое украшение, класс decor-order */}
       </aside>
 
       <BackHome />

@@ -38,7 +38,7 @@
   margin-left: 10px;
   padding-left: 10px;
   border-left: 1px solid var(--line);
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Lora', Georgia, serif;
   font-size: 13.5px;
   font-style: italic;
   font-weight: 500;
@@ -50,7 +50,7 @@
 .section-note p {
   margin-top: 5px;
   max-width: 72ch;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Lora', Georgia, serif;
   font-size: clamp(15px, 1.5vw, 17px);
   line-height: 1.5;
   color: var(--pine-dark);

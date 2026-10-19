@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
-import { emitMotion } from '../lib/motion';
+import { emitMotion, reducedMotion } from '../lib/motion';
 
 /**
  * Сцены сценария. `progress` — положение на шкале сборки матрёшки,
@@ -87,7 +87,11 @@ export function useStoryTimeline({ enabled, onProgress, startScene, countdownRef
     const target = SCENES[index];
     // Назад отматываем быстрее — зритель это уже видел
     const back = sceneRef.current > index;
-    const travel = instant ? 0 : target.travel * (back ? 0.6 : 1);
+    // Меньше движения: без полёта деталей, а на первом экране матрёшка
+    // сразу стоит собранной (0.5 — середина «стоит целая»), а не разобранной
+    const calm = reducedMotion();
+    const travel = instant || calm ? 0 : target.travel * (back ? 0.6 : 1);
+    const progress = calm && target.progress === 0 ? 0.5 : target.progress;
 
     tween.current?.kill();
     resetCountdown();
@@ -99,7 +103,7 @@ export function useStoryTimeline({ enabled, onProgress, startScene, countdownRef
     rememberScene(index);
 
     tween.current = gsap.to(state, {
-      progress: target.progress,
+      progress,
       duration: travel,
       ease: 'sine.inOut',
       onUpdate: () => renderRef.current?.(state.progress),

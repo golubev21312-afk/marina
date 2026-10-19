@@ -45,7 +45,7 @@
 
 .catalog__soon .catalog__soon-title {
   margin-bottom: 8px;
-  font-family: 'Fraunces', Georgia, serif;
+  font-family: 'Lora', Georgia, serif;
   font-size: clamp(19px, 2vw, 23px);
   font-weight: 600;
   color: var(--pine-dark);

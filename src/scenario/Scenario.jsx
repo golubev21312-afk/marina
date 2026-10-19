@@ -29,7 +29,8 @@ export default function Scenario() {
     return () => clearTimeout(timer);
   }, [toShowcase]);
 
-  const started = ready && factRead;
+  // Без 3D (телефон не тянет, модель не пришла) — сразу карусель, без ожидания
+  const started = ready ? factRead : failed;
 
   // Кадры рисует three.js, React дёргаем только на смене состояния
   const handleProgress = useCallback((progress) => {
@@ -42,20 +43,20 @@ export default function Scenario() {
     countdownRef,
     enabled: started,
     onProgress: handleProgress,
-    startScene: toShowcase ? SCENES.length - 1 : undefined,
+    startScene: toShowcase || (failed && !ready) ? SCENES.length - 1 : undefined,
   });
 
   return (
     <section className="scenario">
       <canvas ref={canvasRef} className="scenario__canvas" />
 
-      {!started && <LoadingFacts progressPct={progressPct} failed={failed} />}
+      {!started && <LoadingFacts progressPct={progressPct} />}
 
       {/* Полоска отсчёта до следующей сцены */}
       <div ref={countdownRef} className="scenario__countdown" />
 
       {/* Украшения первого экрана. «Белая»: две разные матрёшки по краям,
-          смотрят к центру. «Малахит»: Хозяйка Медной горы слева, ящерка справа */}
+          смотрят к центру. «Малахит»: Хозяйка Медной горы слева */}
       <div className={`decor-intro ${scene === 0 ? 'is-on' : ''}`} aria-hidden="true">
         {/* Только украшения текущей темы: скрытая CSS-ом картинка всё равно скачивается */}
         {theme === 'kraft' ? (
@@ -66,7 +67,7 @@ export default function Scenario() {
         ) : (
           <>
             <img className="decor decor--malachite decor-intro__mat decor-intro__mat--left" src="/img/decor-hozyayka-faces-right.webp" alt="" />
-            <img className="decor decor--malachite decor-intro__lizard" src="/img/lizard-plaque.webp" alt="" />
+            {/* Справа была пластина с ящеркой (убрана 19.10) — место под новое украшение, класс decor-intro__lizard */}
           </>
         )}
       </div>
@@ -76,7 +77,7 @@ export default function Scenario() {
       </div>
 
       {/* Фото карусели — после модели: на медленном интернете не отнимают у неё скорость */}
-      <Showcase shown={showcaseShown} photos={started} theme={theme} />
+      <Showcase shown={showcaseShown} photos={started} />
 
       <div className="scenario__controls">
         <button

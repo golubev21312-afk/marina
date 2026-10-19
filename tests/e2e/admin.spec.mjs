@@ -46,7 +46,7 @@ test('товар: добавить с фото, в каталоге, налич�
   await page.getByPlaceholder('Например, Неваляшка «Учитель»').fill('Ангел из автотеста');
   await page.getByPlaceholder('Что это за изделие, для кого, чем особенное').fill('Проверка добавления товара.');
   await page.getByPlaceholder('Пусто — «цена по запросу»').fill('990');
-  await page.locator('select').selectOption({ index: 1 });
+  await page.locator('.admin-field').filter({ hasText: 'Раздел' }).locator('select').selectOption({ index: 1 });
   await page.getByRole('button', { name: 'Сохранить' }).click();
   await expect(page.getByText('Товар добавлен — он уже на сайте.')).toBeVisible({ timeout: 20_000 });
 
@@ -55,9 +55,9 @@ test('товар: добавить с фото, в каталоге, налич�
   expect(saved.price).toBe(990);
 
   const row = page.locator('.admin-item').filter({ hasText: 'Ангел из автотеста' });
-  await row.getByRole('button', { name: 'Нет в наличии' }).click();
-  await expect(page.getByText('Отмечено: нет в наличии.')).toBeVisible();
-  await expect(row.getByText('нет в наличии')).toBeVisible();
+  await row.getByLabel('Наличие').selectOption('to_order');
+  await expect(page.getByText('«Ангел из автотеста»: под заказ.')).toBeVisible();
+  await expect(row.getByText('под заказ', { exact: true })).toBeVisible();
 
   // Поиск в списке
   await page.getByLabel('Найти товар').fill('автотест');
@@ -68,6 +68,7 @@ test('товар: добавить с фото, в каталоге, налич�
   const site = await page.context().newPage();
   await site.goto(`/izdelie/${saved.id}`);
   await expect(site.getByRole('heading', { name: 'Ангел из автотеста' })).toBeVisible();
+  await expect(site.locator('.product__to-order-badge')).toHaveText('Под заказ');
   await site.close();
 
   await row.getByRole('button', { name: 'Удалить' }).click();
@@ -75,22 +76,36 @@ test('товар: добавить с фото, в каталоге, налич�
   await expect(page.getByText('«Ангел из автотеста» удалён.')).toBeVisible();
 });
 
-test('раздел с товаром удалить нельзя — даже если список товаров не загрузился', async ({ page, request }) => {
+test('раздел с товаром: «Нет» отменяет, без ответа через 30 с удаляется, товар переезжает', async ({ page, request }) => {
   const api = await adminApi(request);
-  const [category] = await api.list('categories', '&sort=-sort');
-  const product = await api.create('products', { title: 'Держит раздел', category: category.id, available: true });
+  const [target] = await api.list('categories', '&sort=sort');
+  const doomed = await api.create('categories', { title: 'Раздел под снос', slug: 'pod-snos', sort: 9990 });
+  const product = await api.create('products', { title: 'Переезжает', category: doomed.id, stock: 'in_stock' });
 
-  // Список товаров в браузере «не загрузился»: запрос без фильтра обрываем
+  // Список товаров в браузере «не загрузился»: запрос без фильтра обрываем —
+  // товары раздела всё равно должны найтись по базе
   await page.route('**/api/collections/products/records?*', (route) =>
     route.request().url().includes('filter=') ? route.continue() : route.abort(),
   );
+  await page.clock.install();
   await login(page);
   await page.getByRole('tab', { name: /Разделы/ }).click();
-  const row = page.locator('.admin-item--category').filter({ has: page.getByText(category.title, { exact: true }) });
+  const row = page.locator('.admin-item--category').filter({ has: page.getByText('Раздел под снос', { exact: true }) });
+
   await row.getByRole('button', { name: 'Удалить' }).click();
-  await row.getByRole('button', { name: 'Да' }).click();
-  await expect(page.getByText(`В разделе «${category.title}» 1 шт. — сначала перенесите их в другой раздел.`)).toBeVisible();
+  await expect(row.getByText(/Удалится сам через 30 с/)).toBeVisible();
+  await row.getByRole('button', { name: 'Нет' }).click();
+  await page.clock.runFor(35_000);
   await expect(row).toBeVisible();
+
+  await row.getByRole('button', { name: 'Удалить' }).click();
+  await row.locator('select').selectOption(target.id);
+  await page.clock.runFor(31_000);
+  await expect(page.getByText(`Раздел «Раздел под снос» удалён, товары (1 шт.) перенесены в «${target.title}».`)).toBeVisible();
+  await expect(row).toHaveCount(0);
+
+  const [moved] = await api.list('products', `&filter=${encodeURIComponent(`id='${product.id}'`)}`);
+  expect(moved.category).toBe(target.id);
   await api.remove('products', product.id);
 });
 

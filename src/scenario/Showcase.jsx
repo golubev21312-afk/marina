@@ -6,7 +6,7 @@ import { emitMotion } from '../lib/motion';
 import './Showcase.css';
 
 /** Финальная сцена: карусель изделий с историями на обороте. */
-export default function Showcase({ shown, photos, theme }) {
+export default function Showcase({ shown, photos }) {
   const ITEMS = useShowcaseItems();
   const [picked, setActive] = useState(0);
   const [flipped, setFlipped] = useState(null);
@@ -83,9 +83,7 @@ export default function Showcase({ shown, photos, theme }) {
 
       <p className="showcase__note">Актуальные цены — в каталоге</p>
 
-      {theme === 'malachite' && (
-        <img className="decor decor--malachite decor-show" src="/img/lizard-plaque.webp" alt="" aria-hidden="true" />
-      )}
+      {/* Здесь в «Малахите» была пластина с ящеркой (убрана 19.10) — место под новое украшение, класс decor-show */}
     </div>
   );
 }
