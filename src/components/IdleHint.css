@@ -1,0 +1,147 @@
+/* Матрёшка с подсказкой — выглядывает из правого нижнего угла (слева внизу — кнопки «назад») */
+.idle-hint {
+  position: fixed;
+  right: 12px;
+  bottom: 0;
+  z-index: 45;
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.idle-hint__doll {
+  width: auto;
+  height: 180px;
+  margin-bottom: -14px;
+  filter: drop-shadow(0 16px 24px rgba(var(--shadow-rgb), 0.45));
+  transform-origin: 50% 100%;
+  animation: idle-hint-peek 0.9s cubic-bezier(0.34, 1.4, 0.64, 1) both;
+}
+
+.idle-hint__bubble {
+  position: relative;
+  max-width: 260px;
+  margin-bottom: 120px;
+  padding: 16px 18px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 18px 18px 4px 18px;
+  background: var(--paper);
+  box-shadow: 0 30px 60px -30px rgba(var(--shadow-rgb), 0.6);
+  color: var(--ink);
+  pointer-events: auto;
+  animation: idle-hint-say 0.4s ease-out 0.6s both;
+}
+
+/* Хвостик облачка — к матрёшке */
+.idle-hint__bubble::after {
+  content: '';
+  position: absolute;
+  right: -7px;
+  bottom: 14px;
+  width: 12px;
+  height: 12px;
+  border-right: 1px solid var(--glass-border);
+  border-bottom: 1px solid var(--glass-border);
+  background: var(--paper);
+  transform: rotate(-45deg);
+}
+
+.idle-hint__bubble p {
+  margin: 0 18px 12px 0;
+  font-family: 'Lora', Georgia, serif;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.idle-hint__close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-soft);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.idle-hint__close:hover {
+  background: var(--hover-fill);
+  color: var(--ink);
+}
+
+.idle-hint__go {
+  display: inline-block;
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.idle-hint__go:hover {
+  background: var(--accent-fill-hover);
+}
+
+/* Выезжает снизу, чуть перелетает и качнувшись встаёт */
+@keyframes idle-hint-peek {
+  0% {
+    transform: translateY(100%) rotate(-8deg);
+  }
+  70% {
+    transform: translateY(-4%) rotate(4deg);
+  }
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+}
+
+@keyframes idle-hint-say {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .idle-hint {
+    right: 4px;
+  }
+
+  .idle-hint__doll {
+    height: 120px;
+    margin-bottom: -10px;
+  }
+
+  .idle-hint__bubble {
+    max-width: 210px;
+    margin-bottom: 80px;
+  }
+
+  .idle-hint__bubble p {
+    font-size: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idle-hint__doll,
+  .idle-hint__bubble {
+    animation: idle-hint-fade 0.3s ease-out both;
+  }
+
+  @keyframes idle-hint-fade {
+    from {
+      opacity: 0;
+    }
+  }
+}

@@ -3,6 +3,7 @@ import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { MotionConfig } from 'motion/react';
 import CookieNotice from './components/CookieNotice';
 import ErrorBoundary from './components/ErrorBoundary';
+import IdleHint from './components/IdleHint';
 import Lizards from './components/Lizards';
 import { trackPage } from './lib/track';
 import { TransitionProvider } from './transition/Transition';
@@ -104,6 +105,7 @@ export default function App() {
             </Suspense>
           </Guarded>
           <Lizards />
+          <IdleHint />
           <CookieNotice />
         </TransitionProvider>
       </BrowserRouter>

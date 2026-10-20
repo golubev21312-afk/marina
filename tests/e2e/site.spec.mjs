@@ -285,3 +285,28 @@ test('цвет строки браузера (theme-color) — как у тем�
     if (theme === 'malachite') expect((await (await page.request.get('/')).text())).toContain(`name="theme-color" content="${token}"`);
   }
 });
+
+test('бездействие 2 минуты: выглядывает матрёшка с подсказкой, раз за визит', async ({ page }) => {
+  // fastForward перескакивает время: runFor честно крутил бы каждый кадр 3D на странице заказа
+  await page.clock.install();
+  // Действие сбрасывает отсчёт: 1,5 мин тишины, движение мышью, ещё 1 мин — подсказки нет
+  await page.goto('/catalog?theme=malachite');
+  await expect(page.locator('.card').first()).toBeVisible();
+  await page.clock.fastForward(90_000);
+  await page.mouse.move(200, 200);
+  await page.clock.fastForward(60_000);
+  await expect(page.locator('.idle-hint')).toHaveCount(0);
+
+  // Ещё минута тишины — две минуты с последнего движения: выглянула
+  await page.clock.fastForward(61_000);
+  const hint = page.locator('.idle-hint');
+  await expect(hint).toContainText('Не нашли нужное?');
+  await expect(hint.locator('img')).toHaveAttribute('src', '/img/decor-romashka-faces-left.webp');
+
+  // Кнопка ведёт в заказ, подсказка уходит и за этот визит больше не появится
+  await hint.getByRole('link', { name: 'Индивидуальный заказ' }).click();
+  await expect(page).toHaveURL(/\/order$/);
+  await expect(hint).toHaveCount(0);
+  await page.clock.fastForward(150_000);
+  await expect(hint).toHaveCount(0);
+});
