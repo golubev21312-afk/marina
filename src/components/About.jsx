@@ -66,6 +66,11 @@ export default function About() {
               Показать на Яндекс Картах
             </a>
           </li>
+          <li>
+            <span>Часы работы</span>
+            <b>с 10:00 до 18:00</b>
+            <small>Отвечаем на сообщения в течение часа</small>
+          </li>
           <li className="about__privacy">
             <Link to="/privacy">Политика обработки персональных данных</Link>
           </li>
