@@ -87,11 +87,10 @@ export function useStoryTimeline({ enabled, onProgress, startScene, countdownRef
     const target = SCENES[index];
     // Назад отматываем быстрее — зритель это уже видел
     const back = sceneRef.current > index;
-    // Меньше движения: без полёта деталей, а на первом экране матрёшка
-    // сразу стоит собранной (0.5 — середина «стоит целая»), а не разобранной
+    // Меньше движения: без полёта деталей — карусель сразу. Первый экран — как
+    // обычно, без матрёшки: собранная по центру, она стояла прямо под текстом
     const calm = reducedMotion();
     const travel = instant || calm ? 0 : target.travel * (back ? 0.6 : 1);
-    const progress = calm && target.progress === 0 ? 0.5 : target.progress;
 
     tween.current?.kill();
     resetCountdown();
@@ -103,7 +102,7 @@ export function useStoryTimeline({ enabled, onProgress, startScene, countdownRef
     rememberScene(index);
 
     tween.current = gsap.to(state, {
-      progress,
+      progress: target.progress,
       duration: travel,
       ease: 'sine.inOut',
       onUpdate: () => renderRef.current?.(state.progress),
