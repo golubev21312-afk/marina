@@ -34,10 +34,10 @@ export default function Gallery({ photos, title }) {
               className="gallery__slide"
               style={{ '--offset': offset, zIndex: photos.length - Math.abs(offset) }}
               onClick={() => setActive(i)}
-              aria-label={`${title} — фото ${i + 1}`}
               aria-current={i === active}
             >
-              <img src={photo} alt="" loading={i === 0 ? 'eager' : 'lazy'} />
+              {/* Подпись — у картинки, а не у кнопки: её видят и диктор, и поиск по картинкам */}
+              <img src={photo} alt={`${title} — фото ${i + 1}`} loading={i === 0 ? 'eager' : 'lazy'} />
             </button>
           );
         })}

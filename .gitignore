@@ -31,3 +31,5 @@ backend/pocketbase
 # Автотесты: отчёты и снимки ошибок
 test-results
 playwright-report
+# Эталонные снимки страниц — свои на каждой машине (tests/e2e/screens.spec.mjs)
+tests/e2e/*-snapshots/

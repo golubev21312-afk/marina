@@ -1,13 +1,14 @@
+import { photoUrl } from './photoPreviews';
 import { pb } from './pb';
 import { createStore } from './store';
 
 /**
  * Отзывы покупателей — из базы (коллекция reviews), Марина ведёт их
  * в админке на вкладке «Отзывы». Сайт показывает только visible.
- * { id, author, text, paragraphs, when, productId, photo, preview, sort, visible }
+ * { id, author, text, paragraphs, when, productId, photo, preview, previewNames, sort, visible }
  */
 export function toReview(record) {
-  const photo = (thumb) => (record.photo ? pb.files.getURL(record, record.photo, { thumb }) : '');
+  const photo = (size) => (record.photo ? photoUrl(pb, record, record.photo, size) : '');
   return {
     id: record.id,
     author: record.author,
@@ -22,6 +23,7 @@ export function toReview(record) {
     photoName: record.photo || '',
     photo: photo('480x480'),
     preview: photo('160x160'),
+    previewNames: record.previews ?? [],
     sort: record.sort,
     visible: record.visible,
   };

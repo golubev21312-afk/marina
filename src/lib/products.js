@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { photoUrl } from './photoPreviews';
 import { pb } from './pb';
 import { createStore } from './store';
 
@@ -22,7 +23,7 @@ export const CHEAP_PRICE = 1000;
 
 /** Запись базы → товар в том виде, в каком его ждут компоненты. */
 export function toProduct(record) {
-  const url = (file, thumb) => pb.files.getURL(record, file, thumb ? { thumb } : undefined);
+  const url = (file, size) => photoUrl(pb, record, file, size);
   return {
     id: record.id,
     title: record.title,
@@ -40,6 +41,8 @@ export function toProduct(record) {
     thumbs: record.photos.map((file) => url(file, '600x750')),
     small: record.photos.map((file) => url(file, '240x300')),
     files: record.photos,
+    // Свои превью фото (WebP) — админке, чтобы убрать их вместе с фото
+    previewFiles: record.previews ?? [],
     sort: record.sort,
     // Дата удаления в корзину; пусто — товар на сайте
     deleted: record.deleted || '',

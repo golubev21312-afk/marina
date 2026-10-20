@@ -1,18 +1,20 @@
 import stories from '../data/stories.json';
+import { photoUrl } from './photoPreviews';
 import { pb } from './pb';
 import { createStore } from './store';
 
 /**
  * Карточки карусели на главной — из базы (коллекция showcase), Марина
  * правит их в админке на вкладке «Главная». Не зависят от каталога.
- * { id, title, photo, preview, story, paragraphs, sort, visible }
+ * { id, title, photo, preview, previewNames, story, paragraphs, sort, visible }
  */
 export function toShowcaseItem(record) {
   return {
     id: record.id,
     title: record.title,
-    photo: pb.files.getURL(record, record.photo, { thumb: '600x800' }),
-    preview: pb.files.getURL(record, record.photo, { thumb: '240x320' }),
+    photo: photoUrl(pb, record, record.photo, '600x800'),
+    preview: photoUrl(pb, record, record.photo, '240x320'),
+    previewNames: record.previews ?? [],
     story: record.story ?? '',
     // Каждая строка истории — абзац, как в тексте заказчика
     paragraphs: (record.story ?? '')
@@ -45,7 +47,7 @@ const FALLBACK = [
   { id: 'khozyayka-mednoy-gory', title: 'Хозяйка Медной горы' },
 ].map((entry) => ({
   ...entry,
-  photo: `/img/${entry.id}.jpg`,
+  photo: `/img/${entry.id}.webp`,
   paragraphs: stories[entry.id]?.paragraphs ?? [],
 }));
 

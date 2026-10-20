@@ -12,7 +12,10 @@ test('вход: неверный пароль — сообщение', async ({ 
   await expect(page.getByText('Неверная почта или пароль.')).toBeVisible();
 });
 
-test('разделы: добавить, переименовать, порядок, удалить', async ({ page }) => {
+test('разделы: добавить, переименовать, порядок, удалить', async ({ page, request }) => {
+  // Порядок разделов в конце вернём: от него зависят снимки каталога (screens.spec.mjs)
+  const api = await adminApi(request);
+  const original = await api.list('categories');
   await login(page);
   await page.getByRole('tab', { name: /Разделы/ }).click();
   await page.getByRole('button', { name: '+ Добавить раздел' }).click();
@@ -53,6 +56,8 @@ test('разделы: добавить, переименовать, порядо
   await page.reload();
   await page.getByRole('tab', { name: /Разделы/ }).click();
   await expect.poll(names).toEqual([last, ...order.slice(0, -1)]);
+
+  await Promise.all(original.map((category) => api.update('categories', category.id, { sort: category.sort })));
 });
 
 test('товар: добавить с фото, в каталоге, наличие, удалить', async ({ page, request }) => {
@@ -77,6 +82,9 @@ test('товар: добавить с фото, в каталоге, налич�
 
   const [saved] = (await (await adminApi(request)).list('products', "&filter=(title='Ангел из автотеста')"));
   expect(saved.photos).toHaveLength(1);
+  // Фото с телефона — в WebP, и к нему два своих превью (lib/photoPreviews.js)
+  expect(saved.photos[0]).toMatch(/\.webp$/);
+  expect(saved.previews).toHaveLength(2);
   expect(saved.price).toBe(990);
   expect(saved.size).toBe('высота 15 см');
   expect(saved.occasions).toEqual(['учителю', 'на юбилей']);
@@ -95,7 +103,15 @@ test('товар: добавить с фото, в каталоге, налич�
   const site = await page.context().newPage();
   await site.goto(`/izdelie/${saved.id}`);
   await expect(site.getByRole('heading', { name: 'Ангел из автотеста' })).toBeVisible();
+  // Фото подписано названием — для диктора и поиска по картинкам
+  await expect(site.locator('.gallery img')).toHaveAttribute('alt', 'Ангел из автотеста');
   await expect(site.locator('.product__to-order-badge')).toHaveText('Под заказ');
+  // Карточка в каталоге — на своём превью WebP, не на превью базы
+  await site.goto('/catalog');
+  await expect(site.locator('.card', { hasText: 'Ангел из автотеста' }).locator('img')).toHaveAttribute(
+    'src',
+    /_600x750_[a-z0-9]{10}\.webp$/,
+  );
   await site.close();
 
   // Копия: те же поля и фото, сохраняется новым товаром, исходный — как был
@@ -110,6 +126,7 @@ test('товар: добавить с фото, в каталоге, налич�
   const [copy] = await api.list('products', "&filter=(title='Ангел из автотеста — копия')");
   expect(copy.id).not.toBe(saved.id);
   expect(copy.photos).toHaveLength(1);
+  expect(copy.previews).toHaveLength(2);
   expect(copy.price).toBe(990);
   expect(copy.stock).toBe('to_order');
   expect(copy.occasions).toEqual(['учителю', 'на юбилей']);

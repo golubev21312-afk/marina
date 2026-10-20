@@ -13,7 +13,7 @@ function ReviewCard({ review, product }) {
 
   return (
     <figure className="review">
-      {review.photo && <img className="review__photo" src={review.photo} alt="" loading="lazy" />}
+      {review.photo && <img className="review__photo" src={review.photo} alt={`Фото от покупателя — ${review.author}`} loading="lazy" />}
       <blockquote className={`review__text ${long && !open ? 'is-clamped' : ''}`}>
         {review.paragraphs.map((text, i) => (
           <p key={i}>{text}</p>

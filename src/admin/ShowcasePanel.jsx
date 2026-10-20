@@ -5,17 +5,15 @@ import { failText } from './failText';
 import { saveList, saveOrder, useListAction } from './listActions';
 import OrderControls from './OrderControls';
 import { useDragOrder } from './useDragOrder';
-import { shrinkImage } from './shrinkImage';
-
-/** Форматы, которые показывают все браузеры (так же разрешено в базе). */
-const WEB_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
+import { PREVIEW_SIZES } from '../lib/photoPreviews';
+import { preparePhoto, WEB_TYPES } from './shrinkImage';
 
 /** Форма карточки: фото, название, история на обороте, показывать ли. */
 function ShowcaseForm({ item, onSave, onCancel }) {
   const [title, setTitle] = useState(item?.title ?? '');
   const [story, setStory] = useState(item?.story ?? '');
   const [visible, setVisible] = useState(item?.visible ?? true);
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState(null); // { file, previews }
   const [preview, setPreview] = useState(item?.preview ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -29,10 +27,10 @@ function ShowcaseForm({ item, onSave, onCancel }) {
     if (!picked) return;
     setBusy(true);
     setError('');
-    const shrunk = await shrinkImage(picked);
-    if (WEB_FORMATS.includes(shrunk.type)) {
-      setFile(shrunk);
-      setPreview(URL.createObjectURL(shrunk));
+    const prepared = await preparePhoto(picked, PREVIEW_SIZES.showcase);
+    if (WEB_TYPES.includes(prepared.file.type)) {
+      setFile(prepared);
+      setPreview(URL.createObjectURL(prepared.file));
     } else {
       setError('Фото в формате, который сайт не покажет (например, HEIC). Сохраните его как JPEG и добавьте снова.');
     }
@@ -51,7 +49,12 @@ function ShowcaseForm({ item, onSave, onCancel }) {
       data.append('title', title.trim());
       data.append('story', story.trim());
       data.append('visible', String(visible));
-      if (file) data.append('photo', file);
+      if (file) {
+        data.append('photo', file.file);
+        // Превью прежнего фото — долой, новые — в базу
+        item?.previewNames.forEach((name) => data.append('previews-', name));
+        file.previews.forEach((preview) => data.append('previews+', preview));
+      }
       await onSave(data);
     } catch (err) {
       setError(failText(err, 'сохранить'));

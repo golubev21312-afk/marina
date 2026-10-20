@@ -12,6 +12,8 @@ export default defineConfig({
   workers: 1,
   timeout: 60_000,
   reporter: 'list',
+  // Нет эталонного снимка (screens.spec.mjs) — записать его, а не падать
+  updateSnapshots: 'missing',
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     channel: 'chrome',

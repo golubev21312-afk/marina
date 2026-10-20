@@ -234,3 +234,53 @@ test('заказ изделия: ссылка на него копируется
   await dialog.getByRole('button', { name: 'Остаться на сайте' }).click();
   await expect(dialog).not.toBeVisible();
 });
+
+test('безопасность: заголовки, сжатие, ни одного нарушения CSP', async ({ page, request }) => {
+  const home = await request.get('/', { headers: { 'Accept-Encoding': 'gzip' } });
+  const headers = home.headers();
+  expect(headers['content-security-policy']).toContain("script-src 'self'");
+  expect(headers['x-frame-options']).toBe('DENY');
+  expect(headers['x-content-type-options']).toBe('nosniff');
+  expect(headers['content-encoding']).toBe('gzip');
+  // Панель базы — со своей политикой от PocketBase, наша её не перебивает
+  expect((await request.get('/_/')).headers()['content-security-policy']).not.toContain('mc.yandex.ru');
+
+  // Нарушения политики браузер не бросает ошибкой, а шлёт событие — собираем их
+  await page.addInitScript(() => {
+    window.__csp = [];
+    document.addEventListener('securitypolicyviolation', (e) => window.__csp.push(`${e.violatedDirective} ${e.blockedURI}`));
+  });
+  await page.goto('/?reset');
+  // Главная с настоящей моделью: WebAssembly распаковщика, текстуры через blob:
+  await expect(page.locator('.scenario__loading')).not.toBeAttached({ timeout: 30_000 });
+  expect(await page.evaluate(() => window.__csp)).toEqual([]);
+  for (const path of ['/catalog', `/izdelie/${product.id}`, '/order', '/admin']) {
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    expect(await page.evaluate(() => window.__csp), path).toEqual([]);
+  }
+});
+
+test('каталог обновляется сам: новый товар появляется без перезагрузки (realtime сквозь сжатие)', async ({ page, request }) => {
+  await page.goto('/catalog');
+  await expect(page.locator('.card').first()).toBeVisible();
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const fresh = await api.create('products', { title: 'Ангел на лету', stock: 'in_stock', category: category.id });
+  try {
+    await expect(page.locator('.card', { hasText: 'Ангел на лету' })).toBeVisible({ timeout: 10_000 });
+  } finally {
+    await api.remove('products', fresh.id);
+  }
+});
+
+test('цвет строки браузера (theme-color) — как у темы, и до, и после загрузки сайта', async ({ page }) => {
+  for (const theme of ['malachite', 'kraft']) {
+    await page.goto(`/catalog?theme=${theme}`);
+    const meta = () => page.locator('meta[name="theme-color"]').getAttribute('content');
+    const token = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--theme-color').trim());
+    expect(await meta(), theme).toBe(token);
+    // В самом index.html (до React) — тот же цвет: превью ВК и первая отрисовка
+    if (theme === 'malachite') expect((await (await page.request.get('/')).text())).toContain(`name="theme-color" content="${token}"`);
+  }
+});

@@ -76,11 +76,13 @@
   --paper: #154236;
   --paper-deep: #0f3328;
   --ink: #e2ece5;
-  --ink-soft: #a3bfb2;
+  /* Второстепенный текст и медь — светлее с тех пор, как посветлел камень
+     (п. 17: контраст ≥ 4,5 по замеру на живом фоне) */
+  --ink-soft: #cbddd3;
   --pine: #cfe3d6;
   --pine-dark: #f1e1bf;
-  --rust: #dc8f55;
-  --rust-dark: #f0ad78;
+  --rust: #f5c49c;
+  --rust-dark: #f9d6b6;
   --gold: #d9b56c;
   --line: rgba(146, 196, 170, 0.2);
 
@@ -88,11 +90,11 @@
   --on-deep: #f1e1bf;
   --accent-fill: linear-gradient(
     115deg,
-    #7c3f1b 0%,
+    #a8602f 0%,
     #c7743b 22%,
     #f2bd86 46%,
     #d88a4f 58%,
-    #8e4a22 82%,
+    #b06a38 82%,
     #c7743b 100%
   );
   --accent-fill-hover: var(--accent-fill);

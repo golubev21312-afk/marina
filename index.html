@@ -4,26 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0a241d" />
+    <!-- Цвет строки браузера на телефоне — как --theme-color «Малахита» (tokens.css); «Белую» ставит theme-init.js -->
+    <meta name="theme-color" content="#0f3328" />
 
-    <!-- Тема ставится до первой отрисовки, иначе мигнёт светлая. Ключ — как в src/theme/theme.js -->
-    <script>
-      (function () {
-        // Сначала — тема по умолчанию: даже если хранилище недоступно
-        document.documentElement.dataset.theme = 'malachite';
-        try {
-          // ?theme=malachite в адресе — открыть сразу в нужной теме (и запомнить)
-          var fromUrl = new URLSearchParams(location.search).get('theme');
-          if (fromUrl) localStorage.setItem('craft-theme', fromUrl);
-          // По умолчанию — «Малахит»; «Белая» (kraft) — если человек её выбрал
-          var theme = localStorage.getItem('craft-theme') === 'kraft' ? 'kraft' : 'malachite';
-          document.documentElement.dataset.theme = theme;
-          if (theme === 'kraft') {
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f1e7d4');
-          }
-        } catch (e) {}
-      })();
-    </script>
+    <!-- Тема ставится до первой отрисовки, иначе мигнёт светлая (public/theme-init.js) -->
+    <script src="/theme-init.js"></script>
 
     <title>Крафт — мастерская подарков ручной работы в Нижнем Тагиле</title>
     <meta

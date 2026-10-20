@@ -47,6 +47,13 @@ export async function adminApi(request) {
       if (!response.ok()) throw new Error(`Не создалась запись в ${collection}: ${await response.text()}`);
       return response.json();
     },
+    // То же с файлами: multipart, файл — { name, mimeType, buffer }
+    upload: async (collection, multipart) => {
+      const response = await request.post(`/api/collections/${collection}/records`, { headers, multipart });
+      if (!response.ok()) throw new Error(`Не создалась запись в ${collection}: ${await response.text()}`);
+      return response.json();
+    },
+    update: (collection, id, data) => request.patch(`/api/collections/${collection}/records/${id}`, { headers, data }),
     remove: (collection, id) => request.delete(`/api/collections/${collection}/records/${id}`, { headers }),
   };
 }

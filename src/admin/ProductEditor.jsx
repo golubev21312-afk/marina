@@ -1,14 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { useCategories } from '../lib/categories';
+import { PREVIEW_SIZES, previewsOf } from '../lib/photoPreviews';
 import { DEFAULT_MATERIAL, STOCK, useProducts } from '../lib/products';
 import ProductCard from '../components/ProductCard';
-import { shrinkImage } from './shrinkImage';
+import { preparePhoto, WEB_TYPES } from './shrinkImage';
 
 let localId = 0;
 
-/** Форматы, которые показывают все браузеры (так же разрешено в базе). */
-const WEB_FORMATS = ['image/jpeg', 'image/png', 'image/webp'];
+/** Новое фото в форме: файл, его превью и временная ссылка для показа. */
+const newPhoto = ({ file, previews }) => ({
+  key: `new-${++localId}`,
+  kind: 'new',
+  file,
+  previews,
+  preview: URL.createObjectURL(file),
+});
 
 /** Столько фото база принимает у одного товара. */
 const MAX_PHOTOS = 10;
@@ -106,7 +113,7 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
   );
   // Что уже лежит в базе. Если сохранение прошло наполовину, повтор обновит эту запись,
   // а не создаст товар и не загрузит фото второй раз
-  const [saved, setSaved] = useState(product ? { id: product.id, files: product.files } : null);
+  const [saved, setSaved] = useState(product ? { id: product.id, files: product.files, previews: product.previewFiles } : null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const inputRef = useRef(null);
@@ -122,7 +129,7 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
         if (!response.ok) throw new Error(`фото ${response.status}`);
         const blob = await response.blob();
         const file = new File([blob], copyFrom.files[i], { type: blob.type });
-        return { key: `new-${++localId}`, kind: 'new', file, preview: URL.createObjectURL(file) };
+        return newPhoto(await preparePhoto(file, PREVIEW_SIZES.products));
       }),
     )
       .then((copied) => alive && setPhotos(copied))
@@ -147,9 +154,9 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
     const files = Array.from(fileList ?? []);
     if (!files.length) return;
     setBusy(true);
-    const shrunk = await Promise.all(files.map(shrinkImage));
+    const shrunk = await Promise.all(files.map((file) => preparePhoto(file, PREVIEW_SIZES.products)));
     // Браузер не смог перевести фото (например, HEIC в Chrome) — не берём, объясняем
-    const ready = shrunk.filter((file) => WEB_FORMATS.includes(file.type));
+    const ready = shrunk.filter((photo) => WEB_TYPES.includes(photo.file.type));
     const room = Math.max(0, MAX_PHOTOS - photosRef.current.length);
     const taken = ready.slice(0, room);
     if (ready.length < shrunk.length) {
@@ -159,10 +166,7 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
     } else {
       setError('');
     }
-    setPhotos((list) => [
-      ...list,
-      ...taken.map((file) => ({ key: `new-${++localId}`, kind: 'new', file, preview: URL.createObjectURL(file) })),
-    ]);
+    setPhotos((list) => [...list, ...taken.map(newPhoto)]);
     setBusy(false);
     if (inputRef.current) inputRef.current.value = '';
   };
@@ -204,11 +208,22 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
       if (saved) {
         // Удалённые старые фото, затем новые — в конец списка
         const keep = new Set(photos.filter((p) => p.kind === 'old').map((p) => p.name));
-        saved.files.filter((name) => !keep.has(name)).forEach((name) => data.append('photos-', name));
-        newOnes.forEach((p) => data.append('photos+', p.file));
+        saved.files
+          .filter((name) => !keep.has(name))
+          .forEach((name) => {
+            data.append('photos-', name);
+            previewsOf(saved.previews, name).forEach((preview) => data.append('previews-', preview));
+          });
+        newOnes.forEach((p) => {
+          data.append('photos+', p.file);
+          p.previews.forEach((preview) => data.append('previews+', preview));
+        });
         record = await pb.collection('products').update(saved.id, data);
       } else {
-        newOnes.forEach((p) => data.append('photos', p.file));
+        newOnes.forEach((p) => {
+          data.append('photos', p.file);
+          p.previews.forEach((preview) => data.append('previews', preview));
+        });
         // Новый товар — первым в списке и в каталоге
         data.append('sort', String(Math.min(10, ...products.map((p) => p.sort ?? 10)) - 10));
         record = await pb.collection('products').create(data);
@@ -220,7 +235,7 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
       const order = photos.map((p) => (p.kind === 'old' ? p.name : byKey.get(p.key)));
 
       // Фото уже в базе: запоминаем это до перестановки, которая может сорваться
-      setSaved({ id: record.id, files: record.photos });
+      setSaved({ id: record.id, files: record.photos, previews: record.previews ?? [] });
       setPhotos((list) =>
         list.map((p) => (p.kind === 'new' ? { key: p.key, kind: 'old', name: byKey.get(p.key), preview: p.preview } : p)),
       );

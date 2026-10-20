@@ -9,9 +9,9 @@ const VK_COMMUNITY = 'https://vk.ru/craftthandmade';
 const MAP_URL = `https://yandex.ru/maps/?text=${encodeURIComponent('Нижний Тагил, улица Черных, 15')}`;
 
 const PHOTOS = [
-  { src: '/img/about-nabor.jpg', alt: 'Детский набор из натурального дерева в подарочной коробке' },
-  { src: '/img/about-romashki.jpg', alt: 'Неваляшка в славянском наряде с ромашками' },
-  { src: '/img/about-angely.jpg', alt: 'Расписные ангелы под новогодней ёлкой' },
+  { src: '/img/about-nabor.webp', alt: 'Детский набор из натурального дерева в подарочной коробке' },
+  { src: '/img/about-romashki.webp', alt: 'Неваляшка в славянском наряде с ромашками' },
+  { src: '/img/about-angely.webp', alt: 'Расписные ангелы под новогодней ёлкой' },
 ];
 
 /** Текст заказчика о мастерской — дословно, как прислали. */

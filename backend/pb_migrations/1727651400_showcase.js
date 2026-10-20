@@ -54,7 +54,7 @@ migrate(
     SEED.forEach(([id, title], i) => {
       const record = new Record(showcase);
       record.set('title', title);
-      record.set('photo', $filesystem.fileFromPath(`public/img/${id}.jpg`));
+      record.set('photo', $filesystem.fileFromPath(`public/img/${id}.webp`));
       record.set('story', (stories[id]?.paragraphs ?? []).join('\n'));
       record.set('sort', (i + 1) * 10);
       record.set('visible', true);
