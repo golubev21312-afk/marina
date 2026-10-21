@@ -660,3 +660,37 @@ test('медленная загрузка: заглушки вместо кар�
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Тестовый ангел', { timeout: 10_000 });
   await expect(page.locator('.skeleton')).toHaveCount(0);
 });
+
+test.describe('без сети', () => {
+  test.use({ serviceWorkers: 'allow' });
+
+  test('на телефон и без сети: манифест, значки, сохранённый каталог', async ({ page, context, request }) => {
+    const manifest = await (await request.get('/manifest.webmanifest')).json();
+    expect(manifest.short_name).toBe('Крафт');
+    for (const icon of manifest.icons) expect((await request.get(icon.src)).ok(), icon.src).toBe(true);
+
+    // Первый заход — с сетью: воркер встаёт и сохраняет каталог и изделие
+    await page.goto('/catalog');
+    await expect(page.locator('.catalog__grid .card').first()).toBeVisible();
+    await page.evaluate(async () => {
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) await new Promise((done) => navigator.serviceWorker.addEventListener('controllerchange', done));
+    });
+    await page.reload();
+    await expect(page.locator('.catalog__grid .card').first()).toBeVisible();
+    await page.goto(`/izdelie/${product.id}`);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Тестовый ангел');
+
+    // Без сети — тот же каталог и изделие из сохранённого
+    await context.setOffline(true);
+    try {
+      await page.goto('/catalog');
+      await expect(page.locator('.catalog__grid .card', { hasText: 'Тестовый ангел' })).toBeVisible();
+      await expect(page.getByRole('status').filter({ hasText: 'Нет сети' })).toBeVisible();
+      await page.goto(`/izdelie/${product.id}`);
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Тестовый ангел');
+    } finally {
+      await context.setOffline(false);
+    }
+  });
+});
