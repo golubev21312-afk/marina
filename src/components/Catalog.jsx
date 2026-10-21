@@ -45,6 +45,25 @@ function makeOccasions(products) {
   return cheap ? [...tags, { id: CHEAP, title: `до ${CHEAP_PRICE} ₽` }] : tags;
 }
 
+/** Сортировка; «как у мастерской» — ручной порядок из админки. */
+const SORTS = {
+  manual: 'Как у мастерской',
+  new: 'Сначала новые',
+  cheap: 'Сначала дешевле',
+  expensive: 'Сначала дороже',
+};
+
+/** Без цены («по запросу») — при сортировке по цене в конце. */
+function sortItems(items, sort) {
+  const priced = (fn) => (a, b) => (!a.price || !b.price ? Boolean(b.price) - Boolean(a.price) : fn(a.price, b.price));
+  const compare = {
+    new: (a, b) => b.created.localeCompare(a.created),
+    cheap: priced((a, b) => a - b),
+    expensive: priced((a, b) => b - a),
+  }[sort];
+  return compare ? [...items].sort(compare) : items;
+}
+
 function fitsOccasion(item, occasion) {
   if (!occasion) return true;
   if (occasion === CHEAP) return Boolean(item.price) && item.price <= CHEAP_PRICE;
@@ -67,6 +86,7 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
   // Сколько раз выбирали раздел — плашка сверху каждый раз берёт следующий факт
   const [turn, setTurn] = useState(0);
   const [picking, setPicking] = useState(false);
+  const [sort, setSort] = useState('manual');
   const closePicker = useCallback(() => setPicking(false), []);
 
   const pick = (id) => {
@@ -79,12 +99,13 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
 
-    return products.filter((item) => {
+    const found = products.filter((item) => {
       const byCategory = activeTab.id === 'all' || item.category === activeTab.id;
       const byQuery = !needle || item.title.toLowerCase().includes(needle);
       return byCategory && byQuery && fitsOccasion(item, activeOccasion);
     });
-  }, [products, activeTab.id, query, activeOccasion]);
+    return sortItems(found, sort);
+  }, [products, activeTab.id, query, activeOccasion, sort]);
 
   const searching = query.trim() !== '';
   const loading = status === 'idle' || status === 'loading';
@@ -114,25 +135,39 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
 
         <CategoryTabs tabs={tabs} active={activeTab.id} onChange={pick} />
 
-        {occasions.length > 0 && (
-          <div className="occasions" role="group" aria-label="Подборки по поводу">
-            <span className="occasions__label">Подарок:</span>
-            {occasions.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className="occasions__chip"
-                aria-pressed={activeOccasion === item.id}
-                onClick={() => {
-                  emitMotion();
-                  setOccasion((current) => (current === item.id ? '' : item.id));
-                }}
-              >
-                {item.title}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="catalog__bar">
+          {occasions.length > 0 && (
+            <div className="occasions" role="group" aria-label="Подборки по поводу">
+              <span className="occasions__label">Подарок:</span>
+              {occasions.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className="occasions__chip"
+                  aria-pressed={activeOccasion === item.id}
+                  onClick={() => {
+                    emitMotion();
+                    setOccasion((current) => (current === item.id ? '' : item.id));
+                  }}
+                >
+                  {item.title}
+                </button>
+              ))}
+            </div>
+          )}
+          {visible.length > 1 && (
+            <label className="catalog__sort">
+              <span>Сортировка:</span>
+              <select value={sort} onChange={(event) => setSort(event.target.value)}>
+                {Object.entries(SORTS).map(([id, title]) => (
+                  <option key={id} value={id}>
+                    {title}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
 
         {loading && <p className="catalog__loading">Загружаем изделия…</p>}
         {status === 'error' && (

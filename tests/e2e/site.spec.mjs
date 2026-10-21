@@ -351,3 +351,26 @@ test('подбор подарка: кому → повод → бюджет, т�
     await Promise.all(made.map((item) => api.remove('products', item.id)));
   }
 });
+
+test('сортировка каталога: новые, дешевле, дороже; без цены — в конце', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const made = [];
+  for (const [title, price] of [['Сортировка А', 2000], ['Сортировка Б', 0], ['Сортировка В', 500]]) {
+    made.push(await api.create('products', { title, price, stock: 'in_stock', category: category.id }));
+  }
+  try {
+    await page.goto('/catalog');
+    await page.getByPlaceholder('Найти по названию').fill('Сортировка');
+    const titles = page.locator('.card h3');
+    const sort = page.getByLabel('Сортировка:');
+    await sort.selectOption({ label: 'Сначала новые' });
+    await expect(titles).toHaveText(['Сортировка В', 'Сортировка Б', 'Сортировка А']);
+    await sort.selectOption({ label: 'Сначала дешевле' });
+    await expect(titles).toHaveText(['Сортировка В', 'Сортировка А', 'Сортировка Б']);
+    await sort.selectOption({ label: 'Сначала дороже' });
+    await expect(titles).toHaveText(['Сортировка А', 'Сортировка В', 'Сортировка Б']);
+  } finally {
+    await Promise.all(made.map((item) => api.remove('products', item.id)));
+  }
+});
