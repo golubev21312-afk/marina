@@ -411,3 +411,16 @@ test('фильтр списка товаров: раздел, наличие, ч
     await Promise.all(made.map((item) => api.remove('products', item.id)));
   }
 });
+
+test('QR-код сайта: наклейка, предупреждение на этом компьютере, скачать картинку', async ({ page }) => {
+  await login(page);
+  await page.getByRole('button', { name: 'QR-код сайта' }).click();
+  const box = page.getByRole('dialog', { name: 'QR-код сайта' });
+  await expect(box).toContainText('код ведёт сюда, а не на сайт в интернете');
+  const download = box.getByRole('link', { name: 'Скачать картинку' });
+  await expect(download).toHaveAttribute('href', /^data:image\/png;base64,/);
+  const [file] = await Promise.all([page.waitForEvent('download'), download.click()]);
+  expect(file.suggestedFilename()).toBe('kraft-qr.png');
+  await page.keyboard.press('Escape');
+  await expect(box).toHaveCount(0);
+});

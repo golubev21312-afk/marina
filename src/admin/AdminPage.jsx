@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { pb } from '../lib/pb';
 import { refreshProducts, STOCK, useAdminProducts } from '../lib/products';
 import { missingInCard } from './completeness';
+import SiteQr from './SiteQr';
 import { formatPrice } from '../lib/format';
 import { useCategories } from '../lib/categories';
 import CategoriesPanel from './CategoriesPanel';
@@ -119,6 +120,7 @@ export default function AdminPage() {
   const [deleting, setDeleting] = useState(null);
   const [notice, setNotice] = useState(null);
   const [query, setQuery] = useState('');
+  const [qrOpen, setQrOpen] = useState(false);
   // Фильтры списка: раздел и состояние (наличие, черновики, «не дописаны»)
   const [sectionFilter, setSectionFilter] = useState('');
   const [stateFilter, setStateFilter] = useState('');
@@ -289,6 +291,9 @@ export default function AdminPage() {
         </div>
         <nav>
           <Link to="/catalog">Открыть каталог</Link>
+          <button type="button" onClick={() => setQrOpen(true)}>
+            QR-код сайта
+          </button>
           {pb.authStore.record?.collectionName === 'editors' && (
             <button
               type="button"
@@ -307,6 +312,7 @@ export default function AdminPage() {
         </nav>
       </header>
 
+      {qrOpen && <SiteQr onClose={() => setQrOpen(false)} />}
       <main className="admin-main">
         {notice && (
           <div className="admin-notice" role="status">

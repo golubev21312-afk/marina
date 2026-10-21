@@ -16,6 +16,7 @@
     "gsap": "^3.15.0",
     "motion": "^13.4.2",
     "pocketbase": "^0.28.1",
+    "qrcode": "1.5.4",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-router-dom": "^7.18.4",
