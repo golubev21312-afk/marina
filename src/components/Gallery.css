@@ -4,6 +4,16 @@
   gap: 16px;
 }
 
+/* Одно фото — кнопка «на весь экран» без своего оформления */
+.gallery__open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
 .gallery--single img {
   width: 100%;
   aspect-ratio: 4 / 5;
@@ -36,6 +46,11 @@
 }
 
 /* Дальние кадры не перехватывают клики у активного */
+/* Текущее фото открывается на весь экран — курсор-лупа */
+.gallery__slide[aria-current='true'] {
+  cursor: zoom-in;
+}
+
 .gallery__slide[aria-current='false'] {
   cursor: pointer;
 }

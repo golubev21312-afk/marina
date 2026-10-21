@@ -1,3 +1,4 @@
+import fs from 'node:fs';
 import { expect, test } from '@playwright/test';
 import { adminApi, blockVk } from './helpers.mjs';
 
@@ -403,5 +404,49 @@ test('«Новинка»: добавленное за 2 недели — на к
     await expect(page.locator('.product__new-badge')).toHaveText('Новинка');
   } finally {
     await Promise.all(made.map((item) => api.remove('products', item.id)));
+  }
+});
+
+test('фото на весь экран: открыть, листать стрелками и свайпом, приблизить, закрыть', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const form = new FormData();
+  form.append('title', 'Ангел с двумя фото');
+  form.append('stock', 'in_stock');
+  form.append('category', category.id);
+  for (const name of ['angel-hranitel', 'kot-moryak']) {
+    form.append('photos', new Blob([fs.readFileSync(`public/img/${name}.webp`)], { type: 'image/webp' }), `${name}.webp`);
+  }
+  const item = await api.upload('products', form);
+  try {
+    await page.goto(`/izdelie/${item.id}`);
+    await page.locator('.gallery__slide[aria-current="true"]').click();
+    const box = page.getByRole('dialog', { name: /на весь экран/ });
+    await expect(box).toContainText('1 из 2');
+    // Большое фото, а не уменьшенная копия
+    await expect(box.locator('img')).not.toHaveAttribute('src', /thumb=/);
+
+    await page.keyboard.press('ArrowRight');
+    await expect(box).toContainText('2 из 2');
+
+    // Свайп влево — следующее (по кругу — первое)
+    await page.mouse.move(700, 430);
+    await page.mouse.down();
+    await page.mouse.move(450, 430, { steps: 8 });
+    await page.mouse.up();
+    await expect(box).toContainText('1 из 2');
+
+    // Двойное нажатие — приблизить, ещё раз — как было
+    await page.mouse.dblclick(640, 430);
+    await expect(box).toContainText('Двойное нажатие — как было');
+    await expect(box.locator('img')).toHaveAttribute('style', /scale\(2\.5\)/);
+    await page.mouse.dblclick(640, 430);
+    await expect(box.locator('img')).toHaveAttribute('style', /scale\(1\)/);
+
+    await page.keyboard.press('Escape');
+    await expect(box).toHaveCount(0);
+    expect(await page.evaluate(() => document.body.style.overflow)).toBe('');
+  } finally {
+    await api.remove('products', item.id);
   }
 });

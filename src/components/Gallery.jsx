@@ -1,17 +1,24 @@
 import { useState } from 'react';
+import Lightbox from './Lightbox';
 import './Gallery.css';
 
 /**
  * Фотографии изделия веером: активная по центру, соседние отклонены в 3D.
  * Референс № 1 / 2. С одним фото вырождается в обычную картинку.
+ * Нажатие на текущее фото — на весь экран (Lightbox), на соседнее — сделать текущим.
  */
 export default function Gallery({ photos, title }) {
   const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(false);
+  const lightbox = open && <Lightbox photos={photos} start={active} title={title} onClose={() => setOpen(false)} />;
 
   if (photos.length === 1) {
     return (
       <div className="gallery gallery--single">
-        <img src={photos[0]} alt={title} />
+        <button type="button" className="gallery__open" onClick={() => setOpen(true)} aria-label={`${title} — открыть фото на весь экран`}>
+          <img src={photos[0]} alt={title} />
+        </button>
+        {lightbox}
       </div>
     );
   }
@@ -33,7 +40,7 @@ export default function Gallery({ photos, title }) {
               type="button"
               className="gallery__slide"
               style={{ '--offset': offset, zIndex: photos.length - Math.abs(offset) }}
-              onClick={() => setActive(i)}
+              onClick={() => (i === active ? setOpen(true) : setActive(i))}
               aria-current={i === active}
             >
               {/* Подпись — у картинки, а не у кнопки: её видят и диктор, и поиск по картинкам */}
@@ -66,6 +73,7 @@ export default function Gallery({ photos, title }) {
           </svg>
         </button>
       </div>
+      {lightbox}
     </div>
   );
 }
