@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { EDITOR } from './accounts.mjs';
-import { adminApi, login } from './helpers.mjs';
+import { adminApi, blockVk, login } from './helpers.mjs';
 
 /** Админка глазами Марины: вход, разделы, товары, главная, пароль. */
 
@@ -303,14 +303,26 @@ test('смена пароля и вход с новым', async ({ page }) => {
   await expect(page.getByText('Пароль изменён. В следующий раз входите с новым.')).toBeVisible();
 });
 
-test('статистика: заход посетителя виден во вкладке', async ({ page, browser }) => {
+test('статистика: заход посетителя виден во вкладке', async ({ page, browser, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const item = await api.create('products', { title: 'Ангел для статистики', stock: 'in_stock', category: category.id });
   // Посетитель — в отдельном окне, без входа в админку
   const { baseURL, userAgent } = test.info().project.use;
   const visitor = await browser.newContext({ baseURL, userAgent });
   const v = await visitor.newPage();
+  await blockVk(v);
   await v.goto('/catalog');
   await v.goto('/about');
   await v.waitForTimeout(1000);
+  // Открыл изделие и попросил заказать — в статистике оно с «смотрели 1»
+  await v.goto(`/izdelie/${item.id}`);
+  await v.locator('.product__order').click();
+  await v.getByRole('link', { name: 'Перейти в ВК' }).click();
+  // Запись уходит в фоне — ждём её в базе, прежде чем закрыть окно посетителя
+  await expect
+    .poll(async () => (await api.list('visits', `&filter=(kind='vk'%26%26product='${item.id}')`)).length)
+    .toBe(1);
   await visitor.close();
 
   await login(page);
@@ -319,6 +331,10 @@ test('статистика: заход посетителя виден во вк
   const people = page.locator('.stats-tile').first().locator('.stats-tile__value');
   await expect(people).not.toHaveText('0');
   await expect(page.locator('.stats-list').filter({ hasText: 'Страницы сайта' })).toContainText('О мастерской');
+  await expect(page.locator('.stats-list').filter({ hasText: 'чаще просят заказать' })).toContainText(
+    'Ангел для статистики — смотрели 1',
+  );
+  await api.remove('products', item.id);
 });
 
 test('черновик и «что дописать»: на сайте не виден, подсказки в форме, «Показать»', async ({ page, request }) => {
@@ -355,5 +371,43 @@ test('черновик и «что дописать»: на сайте не ви
     await site.close();
   } finally {
     await api.remove('products', item.id);
+  }
+});
+
+test('фильтр списка товаров: раздел, наличие, черновики, «не дописаны»', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [first, second] = await api.list('categories', '&sort=sort');
+  const full = { description: 'Есть.', price: 900, material: 'липа', occasions: ['маме'] };
+  const made = [
+    await api.create('products', { title: 'Фильтр А', stock: 'in_stock', category: first.id }),
+    await api.create('products', { title: 'Фильтр Б', stock: 'to_order', category: second.id, draft: true }),
+  ];
+  made.push(await api.create('products', { title: 'Фильтр В', stock: 'sold_out', category: second.id, ...full }));
+  try {
+    await login(page);
+    const names = page.locator('.admin-item strong');
+    await page.getByLabel('Найти товар').fill('Фильтр');
+    await expect(names).toHaveCount(3);
+
+    await page.getByLabel('Раздел').selectOption({ label: second.title });
+    await expect(names).toHaveCount(2);
+    expect((await names.allTextContents()).sort()).toEqual(['Фильтр Б', 'Фильтр В']);
+    await page.getByLabel('Какие товары').selectOption({ label: 'Черновики' });
+    await expect(names).toHaveText(['Фильтр Б']);
+    await page.getByLabel('Какие товары').selectOption({ label: 'Нет в наличии' });
+    await expect(names).toHaveText(['Фильтр В']);
+    await expect(page.getByText(/Найдено: 1\./)).toBeVisible();
+    // Перестановка выключена, пока фильтр включён
+    await expect(page.locator('.admin-drag')).toHaveCount(0);
+
+    // У всех троих нет второго фото — все «не дописаны»
+    await page.getByLabel('Раздел').selectOption({ label: 'Все разделы' });
+    await page.getByLabel('Какие товары').selectOption({ label: 'Не дописаны' });
+    await expect(names).toHaveCount(3);
+    await page.getByLabel('Раздел').selectOption({ label: first.title });
+    await page.getByRole('button', { name: 'Сбросить' }).click();
+    await expect(names).toHaveCount(3);
+  } finally {
+    await Promise.all(made.map((item) => api.remove('products', item.id)));
   }
 });

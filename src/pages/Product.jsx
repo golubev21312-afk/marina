@@ -211,7 +211,7 @@ export default function Product() {
         </div>
 
         {confirming && (
-          <VkConfirm href={VK_DIALOG} onClose={close} copy={orderText} copying={copying} />
+          <VkConfirm href={VK_DIALOG} onClose={close} product={product.id} copy={orderText} copying={copying} />
         )}
       </article>
 

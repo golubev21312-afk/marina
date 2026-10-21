@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { pb } from '../lib/pb';
 import { useCategories } from '../lib/categories';
-import { useProducts } from '../lib/products';
+import { useAdminProducts } from '../lib/products';
 import { failText } from './failText';
 
 /**
@@ -139,7 +139,7 @@ function TopList({ title, rows, unit, limit = 10 }) {
 
 export default function StatsPanel() {
   const { status: categoriesStatus, items: categories } = useCategories();
-  const { status: productsStatus, items: products } = useProducts();
+  const { status: productsStatus, items: products } = useAdminProducts();
   const [visits, setVisits] = useState(null); // null — ещё грузим
   const [error, setError] = useState('');
   const [period, setPeriod] = useState(7);
@@ -233,6 +233,12 @@ export default function StatsPanel() {
         (v) => v.product,
         productTitle,
       ),
+      // «Заказать в ВК» со страницы изделия — и рядом, сколько раз его смотрели
+      ordered: countBy(
+        vk.filter((v) => v.vk === 'order' && v.product),
+        (v) => v.product,
+        (id) => `${productTitle(id)} — смотрели ${pages.filter((v) => v.product === id).length}`,
+      ),
       pages: countBy(
         pages,
         (v) => (v.path.startsWith('/izdelie/') ? '/izdelie' : v.path),
@@ -292,6 +298,7 @@ export default function StatsPanel() {
           <div className="stats-grid">
             <TopList title="Разделы каталога" rows={stats.sections} unit={views} />
             <TopList title="Изделия — чаще смотрят" rows={stats.products} unit={views} />
+            <TopList title="Изделия — чаще просят заказать" rows={stats.ordered} unit={times} />
             <TopList title="Зачем переходили в ВК" rows={stats.vkBy} unit={times} />
             <TopList title="Страницы сайта" rows={stats.pages} unit={views} />
             <TopList title="Откуда пришли" rows={stats.sources} unit={times} />

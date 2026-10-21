@@ -84,8 +84,8 @@ function Login({ onDone, note }) {
  * Всё сохраняется в базу и сразу появляется в каталоге.
  */
 /** «дописать: N» у товара в списке; что именно — в подсказке при наведении. */
-function MissingNote({ product }) {
-  const missing = missingInCard({
+const missingOf = (product) =>
+  missingInCard({
     description: product.description,
     price: product.price,
     material: product.material,
@@ -94,6 +94,9 @@ function MissingNote({ product }) {
     leadTime: product.leadTime,
     occasions: product.occasions,
   });
+
+function MissingNote({ product }) {
+  const missing = missingOf(product);
   if (!missing.length) return null;
   return (
     <small className="admin-item__missing" title={`Можно дописать: ${missing.join('; ')}`}>
@@ -116,6 +119,9 @@ export default function AdminPage() {
   const [deleting, setDeleting] = useState(null);
   const [notice, setNotice] = useState(null);
   const [query, setQuery] = useState('');
+  // Фильтры списка: раздел и состояние (наличие, черновики, «не дописаны»)
+  const [sectionFilter, setSectionFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState('');
   // Отмеченные галочками — для действий над несколькими товарами сразу
   const [picked, setPicked] = useState([]);
   const [bulkTrash, setBulkTrash] = useState(false);
@@ -188,9 +194,19 @@ export default function AdminPage() {
   // Поиск по названию и описанию; «ё» и «е» — одно и то же
   const norm = (text) => text.toLowerCase().replace(/ё/g, 'е');
   const needle = norm(query.trim());
-  const shown = needle
-    ? items.filter((p) => norm(p.title).includes(needle) || norm(p.description).includes(needle))
-    : items;
+  const fitsState = (p) =>
+    stateFilter === 'draft'
+      ? p.draft
+      : stateFilter === 'missing'
+        ? missingOf(p).length > 0
+        : p.stock === stateFilter;
+  const filtering = Boolean(needle || sectionFilter || stateFilter);
+  const shown = items.filter(
+    (p) =>
+      (!needle || norm(p.title).includes(needle) || norm(p.description).includes(needle)) &&
+      (!sectionFilter || p.categoryId === sectionFilter) &&
+      (!stateFilter || fitsState(p)),
+  );
 
   // Удалённые и пропавшие из списка — из отмеченных выпадают сами
   const pickedLive = picked.filter((id) => items.some((p) => p.id === id));
@@ -337,7 +353,43 @@ export default function AdminPage() {
                 />
               </label>
             )}
-            {needle && <p className="admin-hint">Найдено: {shown.length}. Порядок меняется, когда поиск пуст.</p>}
+            {items.length > 0 && (
+              <div className="admin-filters">
+                <select aria-label="Раздел" value={sectionFilter} onChange={(e) => setSectionFilter(e.target.value)}>
+                  <option value="">Все разделы</option>
+                  {categories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title}
+                    </option>
+                  ))}
+                </select>
+                <select aria-label="Какие товары" value={stateFilter} onChange={(e) => setStateFilter(e.target.value)}>
+                  <option value="">Все товары</option>
+                  {Object.entries(STOCK).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                  <option value="draft">Черновики</option>
+                  <option value="missing">Не дописаны</option>
+                </select>
+                {(sectionFilter || stateFilter) && (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn--ghost"
+                    onClick={() => {
+                      setSectionFilter('');
+                      setStateFilter('');
+                    }}
+                  >
+                    Сбросить
+                  </button>
+                )}
+              </div>
+            )}
+            {filtering && (
+              <p className="admin-hint">Найдено: {shown.length}. Порядок меняется, когда поиск и фильтры пусты.</p>
+            )}
             {error && <p className="admin-error">{error}</p>}
 
             {status === 'loading' && <p className="admin-empty">Загружаем…</p>}
@@ -405,13 +457,13 @@ export default function AdminPage() {
             )}
 
             <ul className="admin-list">
-              {(needle ? shown : drag.shown).map((product, i) => (
+              {(filtering ? shown : drag.shown).map((product, i) => (
                 <li
                   key={product.id}
                   ref={drag.rowRef(product.id)}
-                  className={`admin-item ${needle ? '' : 'admin-item--ordered'} ${drag.draggingId === product.id ? 'is-dragging' : ''}`}
+                  className={`admin-item ${filtering ? '' : 'admin-item--ordered'} ${drag.draggingId === product.id ? 'is-dragging' : ''}`}
                 >
-                  {!needle && (
+                  {!filtering && (
                     <OrderControls
                       index={i}
                       count={items.length}
@@ -485,7 +537,7 @@ export default function AdminPage() {
               ))}
             </ul>
 
-            {!needle && <ProductTrash onNotice={setNotice} />}
+            {!filtering && <ProductTrash onNotice={setNotice} />}
           </>
         )}
       </main>

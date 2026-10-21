@@ -21,12 +21,13 @@ const TEXTS = {
 
 /**
  * goal — как считать в статистике, если не так, как kind (кнопка в меню — 'menu').
+ * product — номер изделия, если заказывают со страницы изделия (для статистики).
  * copy — текст про изделие со ссылкой: ВК не умеет открывать диалог с готовым
  * сообщением, поэтому кладём его в буфер — человеку остаётся вставить.
  * copying — копирование, начатое прямо по нажатию «Заказать» (copyText):
  * браузеры надёжно пускают в буфер только в момент нажатия.
  */
-export default function VkConfirm({ href, onClose, kind = 'order', goal = kind, copy, copying }) {
+export default function VkConfirm({ href, onClose, kind = 'order', goal = kind, product, copy, copying }) {
   const goRef = useRef(null);
   // idle — ещё не копировали, done — в буфере, failed — браузер не дал
   const [copied, setCopied] = useState('idle');
@@ -78,7 +79,7 @@ export default function VkConfirm({ href, onClose, kind = 'order', goal = kind, 
             target="_blank"
             rel="noreferrer"
             onClick={() => {
-              trackVk(goal);
+              trackVk(goal, product);
               if (copy && copied !== 'done') copyText(copy);
               onClose();
             }}

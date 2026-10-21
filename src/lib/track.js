@@ -119,8 +119,9 @@ export function trackSection(slug) {
 }
 
 /** Нажали «Перейти в ВК»: order — заказ изделия, custom — свой заказ, community — сообщество, menu — кнопка в меню. */
-export function trackVk(target) {
-  send({ kind: 'vk', vk: target });
+export function trackVk(target, product) {
+  // product — с какого изделия просили заказать: статистика «смотрели N, заказать — M»
+  send({ kind: 'vk', vk: target, ...(product && { product: product.slice(0, 30) }) });
   ymCall('reachGoal', `vk_${target}`);
 }
 
