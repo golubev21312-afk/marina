@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { pb } from '../lib/pb';
-import { refreshProducts, STOCK, useProducts } from '../lib/products';
+import { refreshProducts, STOCK, useAdminProducts } from '../lib/products';
+import { missingInCard } from './completeness';
 import { formatPrice } from '../lib/format';
 import { useCategories } from '../lib/categories';
 import CategoriesPanel from './CategoriesPanel';
@@ -82,13 +83,32 @@ function Login({ onDone, note }) {
  * Админка /admin: Марина добавляет, меняет и удаляет товары.
  * Всё сохраняется в базу и сразу появляется в каталоге.
  */
+/** «дописать: N» у товара в списке; что именно — в подсказке при наведении. */
+function MissingNote({ product }) {
+  const missing = missingInCard({
+    description: product.description,
+    price: product.price,
+    material: product.material,
+    photoCount: product.files.length,
+    stock: product.stock,
+    leadTime: product.leadTime,
+    occasions: product.occasions,
+  });
+  if (!missing.length) return null;
+  return (
+    <small className="admin-item__missing" title={`Можно дописать: ${missing.join('; ')}`}>
+      дописать: {missing.length}
+    </small>
+  );
+}
+
 export default function AdminPage() {
   // Суперпользователь, вошедший раньше, тоже сюда пускается — права у него шире
   const [loginNote, setLoginNote] = useState('');
   const [authed, setAuthed] = useState(
     () => pb.authStore.isValid && (pb.authStore.isSuperuser || pb.authStore.record?.collectionName === 'editors'),
   );
-  const { status, items } = useProducts();
+  const { status, items } = useAdminProducts();
   const { items: categories } = useCategories();
   const categoryTitle = (id) => categories.find((c) => c.id === id)?.title ?? 'без раздела';
   const [tab, setTab] = useState('products'); // товары | разделы | главная | отзывы | статистика | пароль
@@ -127,7 +147,12 @@ export default function AdminPage() {
   const saved = async (record, created) => {
     await refreshProducts();
     setEditing(null);
-    setNotice({ text: created ? 'Товар добавлен — он уже на сайте.' : 'Изменения сохранены.', id: record.id });
+    const text = record.draft
+      ? 'Черновик сохранён — на сайте его пока нет. Готово — нажмите «Показать».'
+      : created
+        ? 'Товар добавлен — он уже на сайте.'
+        : 'Изменения сохранены.';
+    setNotice({ text, id: record.id });
     window.scrollTo?.(0, 0);
   };
 
@@ -138,6 +163,13 @@ export default function AdminPage() {
       setDeleting(null);
       await refreshProducts();
       setNotice({ text: `«${product.title}» в корзине — вернуть можно 30 дней (внизу списка).` });
+    });
+
+  const publish = (product) =>
+    run('показать', async () => {
+      await pb.collection('products').update(product.id, { draft: false });
+      await refreshProducts();
+      setNotice({ text: `«${product.title}» теперь на сайте.`, id: product.id });
     });
 
   const setStock = (product, stock) =>
@@ -402,7 +434,9 @@ export default function AdminPage() {
                     <span>
                       {categoryTitle(product.categoryId)} · {product.price ? formatPrice(product.price) : 'цена по запросу'}
                     </span>
+                    {product.draft && <em className="admin-item__draft">черновик — на сайте не виден</em>}
                     {product.stock !== 'in_stock' && <em>{STOCK[product.stock].toLowerCase()}</em>}
+                    <MissingNote product={product} />
                   </div>
                   <div className="admin-item__actions">
                     {deleting === product.id ? (
@@ -417,6 +451,11 @@ export default function AdminPage() {
                       </>
                     ) : (
                       <>
+                        {product.draft && (
+                          <button type="button" className="admin-btn admin-btn--main" disabled={busy} onClick={() => publish(product)}>
+                            Показать
+                          </button>
+                        )}
                         <button type="button" className="admin-btn" onClick={() => setEditing(product)}>
                           Изменить
                         </button>

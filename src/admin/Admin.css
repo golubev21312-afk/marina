@@ -220,7 +220,8 @@
 
 .admin-item {
   display: grid;
-  grid-template-columns: 76px 1fr auto;
+  /* Кнопкам — не больше половины строки: не помещаются — переносятся, а название не сжимается */
+  grid-template-columns: 76px minmax(200px, 1fr) fit-content(55%);
   align-items: center;
   gap: 14px;
   padding: 10px;
@@ -259,6 +260,40 @@
 .admin-item__info em {
   font-size: 13px;
   color: var(--rust);
+}
+
+/* Черновик — заметно, чтобы не забыть показать */
+.admin-item__info .admin-item__draft {
+  font-weight: 600;
+}
+
+.admin-item__missing {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+  cursor: help;
+}
+
+/* «Что можно дописать» в форме товара */
+.admin-hints {
+  margin-top: 4px;
+  padding: 12px 16px;
+  border: 1px dashed var(--line);
+  border-radius: 3px 14px 3px 14px;
+}
+
+.admin-hints ul {
+  margin: 6px 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.admin-hints.is-done {
+  border-style: solid;
+  color: var(--ink-soft);
+  font-size: 14px;
 }
 
 .admin-item__actions {
@@ -825,7 +860,7 @@
 }
 
 .admin-item--ordered {
-  grid-template-columns: 44px 76px 1fr auto;
+  grid-template-columns: 44px 76px minmax(200px, 1fr) fit-content(55%);
 }
 
 @media (max-width: 640px) {

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { refreshCategories, slugify, useCategories } from '../lib/categories';
-import { refreshProducts, useProducts } from '../lib/products';
+import { refreshProducts, useAdminProducts } from '../lib/products';
 import { failText } from './failText';
 import { saveList, saveOrder, useListAction } from './listActions';
 import OrderControls from './OrderControls';
@@ -147,7 +147,7 @@ function DeleteCountdown({ category, others, busy, onConfirm, onCancel }) {
  */
 export default function CategoriesPanel({ onNotice }) {
   const { items: categories } = useCategories();
-  const { items: products } = useProducts();
+  const { items: products } = useAdminProducts();
   const [editing, setEditing] = useState(null); // null | 'new' | id
   const [deleting, setDeleting] = useState(null);
 

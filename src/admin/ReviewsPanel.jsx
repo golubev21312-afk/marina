@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
-import { useProducts } from '../lib/products';
+import { useAdminProducts } from '../lib/products';
 import { refreshReviews, useReviews } from '../lib/reviews';
 import { failText } from './failText';
 import { saveList, saveOrder, useListAction } from './listActions';
@@ -11,7 +11,7 @@ import { preparePhoto, WEB_TYPES } from './shrinkImage';
 
 /** Форма отзыва: кто, текст, когда, о каком изделии, фото, показывать ли. */
 function ReviewForm({ item, onSave, onCancel }) {
-  const { items: products } = useProducts();
+  const { items: products } = useAdminProducts();
   const [author, setAuthor] = useState(item?.author ?? '');
   const [text, setText] = useState(item?.text ?? '');
   const [when, setWhen] = useState(item?.when ?? '');
@@ -170,7 +170,7 @@ function ReviewForm({ item, onSave, onCancel }) {
  */
 export default function ReviewsPanel({ onNotice }) {
   const { status, items } = useReviews();
-  const { items: products } = useProducts();
+  const { items: products } = useAdminProducts();
   const [editing, setEditing] = useState(null); // null | 'new' | отзыв
   const [deleting, setDeleting] = useState(null);
   const { busy, error, run } = useListAction(refreshReviews);

@@ -45,6 +45,12 @@ export function createStore(load, label, collection) {
       });
   }
 
+  // Вошли или вышли из админки — база отдаёт другое (Марине — и черновики, и
+  // корзину): перечитываем то, что уже загружено
+  pb.authStore.onChange(() => {
+    if (state.status !== 'idle') refresh();
+  });
+
   function subscribe(listener) {
     listeners.add(listener);
     if (state.status === 'idle') refresh();

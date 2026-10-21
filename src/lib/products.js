@@ -61,6 +61,8 @@ export function toProduct(record) {
     // Свои превью фото (WebP) — админке, чтобы убрать их вместе с фото
     previewFiles: record.previews ?? [],
     sort: record.sort,
+    // Черновик — сохранён, но на сайте не виден (п. 13)
+    draft: Boolean(record.draft),
     // Дата удаления в корзину; пусто — товар на сайте
     deleted: record.deleted || '',
     created: record.created,
@@ -78,11 +80,20 @@ export const refreshProducts = store.refresh;
 export const useAllProducts = store.useStore;
 
 /**
- * Товары без корзины — сайт и списки админки. Посетителям база корзину и
- * не отдаёт; а Марине, если она вошла и смотрит сайт, — отдаёт, поэтому
+ * Товары для сайта — без корзины и черновиков. Посетителям база их и не
+ * отдаёт; а Марине, если она вошла и смотрит сайт, — отдаёт, поэтому
  * отсеиваем и здесь.
  */
 export function useProducts() {
   const state = store.useStore();
-  return useMemo(() => ({ ...state, items: markNew(state.items.filter((item) => !item.deleted)) }), [state]);
+  return useMemo(
+    () => ({ ...state, items: markNew(state.items.filter((item) => !item.deleted && !item.draft)) }),
+    [state],
+  );
+}
+
+/** Списки админки — без корзины, но с черновиками. */
+export function useAdminProducts() {
+  const state = store.useStore();
+  return useMemo(() => ({ ...state, items: state.items.filter((item) => !item.deleted) }), [state]);
 }

@@ -320,3 +320,40 @@ test('статистика: заход посетителя виден во вк
   await expect(people).not.toHaveText('0');
   await expect(page.locator('.stats-list').filter({ hasText: 'Страницы сайта' })).toContainText('О мастерской');
 });
+
+test('черновик и «что дописать»: на сайте не виден, подсказки в форме, «Показать»', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const item = await api.create('products', { title: 'Черновой ангел', stock: 'to_order', category: category.id, draft: true });
+  try {
+    // На сайте черновика нет — ни в каталоге, ни по ссылке, ни в превью для ВК
+    const site = await page.context().newPage();
+    await site.goto(`/izdelie/${item.id}`);
+    await expect(site.getByRole('heading', { name: 'Такого изделия нет' })).toBeVisible();
+    expect(await (await request.get(`/izdelie/${item.id}`)).text()).not.toContain('Черновой ангел');
+
+    await login(page);
+    const row = page.locator('.admin-item').filter({ hasText: 'Черновой ангел' });
+    await expect(row).toContainText('черновик — на сайте не виден');
+    // Нет описания, цены, материала, фото, поводов и срока (под заказ) — 6
+    await expect(row.locator('.admin-item__missing')).toHaveText('дописать: 6');
+
+    // В форме подсказки меняются по ходу заполнения
+    await row.getByRole('button', { name: 'Изменить' }).click();
+    const hints = page.locator('.admin-hints');
+    await expect(hints).toContainText('описание');
+    await page.getByPlaceholder('Что это за изделие, для кого, чем особенное').fill('Ангел из липы.');
+    await expect(hints).not.toContainText('описание');
+    await expect(page.getByText('Черновик', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Отмена' }).click();
+
+    // «Показать» — и он на сайте
+    await row.getByRole('button', { name: 'Показать' }).click();
+    await expect(page.getByText('«Черновой ангел» теперь на сайте.')).toBeVisible();
+    await site.reload();
+    await expect(site.getByRole('heading', { name: 'Черновой ангел' })).toBeVisible();
+    await site.close();
+  } finally {
+    await api.remove('products', item.id);
+  }
+});

@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import { pb } from '../lib/pb';
 import { useCategories } from '../lib/categories';
 import { PREVIEW_SIZES, previewsOf } from '../lib/photoPreviews';
-import { DEFAULT_MATERIAL, STOCK, useProducts } from '../lib/products';
+import { DEFAULT_MATERIAL, STOCK, useAdminProducts } from '../lib/products';
 import ProductCard from '../components/ProductCard';
+import { missingInCard } from './completeness';
 import { preparePhoto, WEB_TYPES } from './shrinkImage';
 
 let localId = 0;
@@ -87,6 +88,28 @@ const STOCK_HINT = {
   sold_out: 'Изделие останется в каталоге с пометкой «нет в наличии» — его можно заказать похожим.',
 };
 
+/** «Что можно дописать» — по тому, что сейчас в форме (admin/completeness.js). */
+function CardHints({ card }) {
+  const missing = missingInCard(card);
+  return (
+    <div className={`admin-hints ${missing.length ? '' : 'is-done'}`} aria-live="polite">
+      {missing.length ? (
+        <>
+          <span className="admin-label">Что можно дописать</span>
+          <ul>
+            {missing.map((text) => (
+              <li key={text}>{text}</li>
+            ))}
+          </ul>
+          <small className="admin-hint">Это подсказки — сохранить можно и так.</small>
+        </>
+      ) : (
+        <span>✓ Карточка заполнена полностью</span>
+      )}
+    </div>
+  );
+}
+
 /**
  * Форма товара: добавить новый, изменить существующий или завести копию
  * (copyFrom — похожее изделие: те же поля и фото, сохраняется новым товаром).
@@ -99,13 +122,14 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
   const [description, setDescription] = useState(base?.description ?? '');
   const [price, setPrice] = useState(base?.price ? String(base.price) : '');
   const { items: categories } = useCategories();
-  const { items: products } = useProducts();
+  const { items: products } = useAdminProducts();
   const [category, setCategory] = useState(base?.categoryId ?? '');
   const [stock, setStock] = useState(base?.stock ?? 'in_stock');
   const [occasions, setOccasions] = useState(base?.occasions ?? []);
   const [leadTime, setLeadTime] = useState(base?.leadTime ?? '');
   const [material, setMaterial] = useState(base?.material ?? '');
   const [size, setSize] = useState(base?.size ?? '');
+  const [draft, setDraft] = useState(base?.draft ?? false);
   // Поводы других изделий — в подсказки, чтобы метки писались одинаково
   const knownOccasions = [...new Set(products.flatMap((item) => item.occasions))];
   const [photos, setPhotos] = useState(() =>
@@ -202,6 +226,7 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
       data.append('lead_time', leadTime.trim());
       data.append('material', material.trim());
       data.append('size', size.trim());
+      data.append('draft', String(draft));
 
       const newOnes = photos.filter((p) => p.kind === 'new');
       let record;
@@ -409,6 +434,21 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
             }}
           />
         </div>
+      </div>
+
+      <CardHints card={{ description, price, material, photoCount: photos.length, stock, leadTime, occasions }} />
+
+      <div className="admin-field">
+        <label className="admin-toggle">
+          <input type="checkbox" checked={!draft} onChange={(e) => setDraft(!e.target.checked)} />
+          <span className="admin-toggle__track" aria-hidden="true" />
+          {draft ? 'Черновик' : 'Показывать на сайте'}
+        </label>
+        <small className="admin-hint">
+          {draft
+            ? 'Товар сохранится здесь, но на сайте его не будет, пока не включите — или не нажмёте «Показать» в списке.'
+            : 'После «Сохранить» товар сразу появится на сайте. Не всё готово — выключите, будет черновик.'}
+        </small>
       </div>
 
       {error && <p className="admin-error">{error}</p>}
