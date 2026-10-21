@@ -11,6 +11,7 @@ import { CHEAP_PRICE, useProducts } from '../lib/products';
 import { useCategories } from '../lib/categories';
 import { trackSection } from '../lib/track';
 import { saveCatalogView } from '../lib/catalogView';
+import { parseQuery, searchScore } from '../lib/search';
 import './Catalog.css';
 
 /**
@@ -103,15 +104,21 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '', 
   };
 
   const visible = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-
-    const found = products.filter((item) => {
-      const byCategory = activeTab.id === 'all' || item.category === activeTab.id;
-      const byQuery = !needle || item.title.toLowerCase().includes(needle);
-      return byCategory && byQuery && fitsOccasion(item, activeOccasion);
-    });
-    return sortItems(found, sort);
-  }, [products, activeTab.id, query, activeOccasion, sort]);
+    // Поиск — lib/search.js: название, описание, материал, поводы, раздел
+    const words = parseQuery(query);
+    const sectionTitle = new Map(categories.map((category) => [category.slug, category.title]));
+    const scored = products
+      .filter((item) => activeTab.id === 'all' || item.category === activeTab.id)
+      .filter((item) => fitsOccasion(item, activeOccasion))
+      .map((item) => ({ item, score: searchScore(item, words, sectionTitle.get(item.category)) }))
+      .filter((entry) => entry.score > 0);
+    // Ищут, а порядок «как у мастерской» — найденное в названии выше
+    if (words.length && sort === 'manual') scored.sort((a, b) => b.score - a.score);
+    return sortItems(
+      scored.map((entry) => entry.item),
+      sort,
+    );
+  }, [products, categories, activeTab.id, query, activeOccasion, sort]);
 
   // Запоминаем, где человек в каталоге, — для возврата из изделия
   const sectionRef = useRef(null);

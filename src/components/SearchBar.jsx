@@ -21,8 +21,8 @@ export default function SearchBar({ value, onChange }) {
         className="search__input"
         type="text"
         value={value}
-        placeholder="Найти по названию"
-        aria-label="Поиск по названию"
+        placeholder="Поиск по изделиям"
+        aria-label="Поиск по изделиям"
         onChange={(event) => onChange(event.target.value)}
         onKeyDown={(event) => event.key === 'Escape' && onChange('')}
       />

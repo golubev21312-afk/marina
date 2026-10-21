@@ -362,7 +362,7 @@ test('сортировка каталога: новые, дешевле, дор�
   }
   try {
     await page.goto('/catalog');
-    await page.getByPlaceholder('Найти по названию').fill('Сортировка');
+    await page.getByPlaceholder('Поиск по изделиям').fill('Сортировка');
     const titles = page.locator('.card h3');
     const sort = page.getByLabel('Сортировка:');
     await sort.selectOption({ label: 'Сначала новые' });
@@ -471,9 +471,9 @@ test('«Вы смотрели»: последние открытые издел�
     const recent = page.locator('.recent');
     await expect(recent.locator('.card h3')).toHaveText(['Смотрели Б', 'Смотрели А']);
     // Во время поиска блок прячется
-    await page.getByPlaceholder('Найти по названию').fill('Смотрели');
+    await page.getByPlaceholder('Поиск по изделиям').fill('Смотрели');
     await expect(recent).toHaveCount(0);
-    await page.getByPlaceholder('Найти по названию').fill('');
+    await page.getByPlaceholder('Поиск по изделиям').fill('');
     await recent.getByRole('button', { name: 'Очистить' }).click();
     await expect(recent).toHaveCount(0);
   } finally {
@@ -492,7 +492,7 @@ test('возврат из изделия в каталог: тот же разд
     await page.setViewportSize({ width: 1280, height: 700 });
     await page.goto('/catalog');
     await page.getByRole('tab', { name: new RegExp(category.title) }).click();
-    await page.getByPlaceholder('Найти по названию').fill('Возврат');
+    await page.getByPlaceholder('Поиск по изделиям').fill('Возврат');
     await page.getByLabel('Сортировка:').selectOption({ label: 'Сначала дороже' });
     const scroller = page.locator('.page');
     const card = page.locator('.catalog__grid .card', { hasText: 'Возврат 2' });
@@ -504,7 +504,7 @@ test('возврат из изделия в каталог: тот же разд
     const settled = () => expect(page.locator('.bubbles')).toHaveAttribute('class', 'bubbles');
     const checkRestored = async (at) => {
       await expect(page.getByRole('tab', { name: new RegExp(category.title) })).toHaveAttribute('aria-selected', 'true');
-      await expect(page.getByPlaceholder('Найти по названию')).toHaveValue('Возврат');
+      await expect(page.getByPlaceholder('Поиск по изделиям')).toHaveValue('Возврат');
       await expect(page.getByLabel('Сортировка:')).toHaveValue('expensive');
       // Карточка — на том же месте экрана, что и перед уходом
       await expect.poll(async () => Math.abs((await cardTop()) - at)).toBeLessThan(30);
@@ -538,9 +538,38 @@ test('возврат из изделия в каталог: тот же разд
     await card.click();
     await settled();
     await page.locator('.product__info .kicker').click();
-    await expect(page.getByPlaceholder('Найти по названию')).toHaveValue('');
+    await expect(page.getByPlaceholder('Поиск по изделиям')).toHaveValue('');
     await expect(page.locator('.catalog__grid .card')).toHaveCount(8);
     expect(await scroller.evaluate((el) => el.scrollTop)).toBeLessThan(50);
+  } finally {
+    await Promise.all(made.map((item) => api.remove('products', item.id)));
+  }
+});
+
+test('поиск: описание и материал, «ё» = «е», окончания, несколько слов, название — выше', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const made = [];
+  const make = async (fields) => made.push(await api.create('products', { stock: 'in_stock', category: category.id, ...fields }));
+  await make({ title: 'Сувенир «Ёлочка»', description: 'Маленькая ёлка на подставке.' });
+  await make({ title: 'Подвеска', description: 'Расписная, с ёлочкой на обороте.', material: 'берёза' });
+  await make({ title: 'Ангелочек-поисковик', description: 'Хранитель дома.', material: 'липа' });
+  try {
+    await page.goto('/catalog');
+    const search = page.getByPlaceholder('Поиск по изделиям');
+    const titles = page.locator('.catalog__grid .card h3');
+
+    // «е» вместо «ё», окончание другое; в названии — выше, чем в описании
+    await search.fill('елочки');
+    await expect(titles).toHaveText(['Сувенир «Ёлочка»', 'Подвеска']);
+    // Материал
+    await search.fill('береза');
+    await expect(titles).toHaveText(['Подвеска']);
+    // Два слова в разных полях, порядок любой
+    await search.fill('липа ангелочек');
+    await expect(titles).toHaveText(['Ангелочек-поисковик']);
+    await search.fill('липа ёлочка');
+    await expect(page.getByText('пока не нашлось')).toBeVisible();
   } finally {
     await Promise.all(made.map((item) => api.remove('products', item.id)));
   }
