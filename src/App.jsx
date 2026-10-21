@@ -4,7 +4,6 @@ import { MotionConfig } from 'motion/react';
 import CookieNotice from './components/CookieNotice';
 import ErrorBoundary from './components/ErrorBoundary';
 import IdleHint from './components/IdleHint';
-import OfflineNotice from './components/OfflineNotice';
 import Lizards from './components/Lizards';
 import { trackPage } from './lib/track';
 import { TransitionProvider } from './transition/Transition';
@@ -118,7 +117,6 @@ export default function App() {
           </Guarded>
           <Lizards />
           <IdleHint />
-          <OfflineNotice />
           <CookieNotice />
         </TransitionProvider>
       </BrowserRouter>
