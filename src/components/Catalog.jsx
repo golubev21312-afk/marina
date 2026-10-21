@@ -4,6 +4,7 @@ import GiftPicker from './GiftPicker';
 import SearchBar from './SearchBar';
 import SectionNote from './SectionNote';
 import ProductCard from './ProductCard';
+import RecentlyViewed from './RecentlyViewed';
 import { TransitionLink } from '../transition/Transition';
 import { emitMotion } from '../lib/motion';
 import { CHEAP_PRICE, useProducts } from '../lib/products';
@@ -216,6 +217,8 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
             </TransitionLink>
           </div>
         )}
+        {/* Во время поиска не путаем с найденным */}
+        {status === 'ready' && !searching && <RecentlyViewed products={products} />}
         {/* «Малахит»: матрёшка с ромашками под каталогом; lazy — в другой теме не скачивается */}
         <img className="decor decor--malachite decor-catalog" src="/img/decor-romashka-faces-left.webp" alt="" aria-hidden="true" loading="lazy" />
       </div>

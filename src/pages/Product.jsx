@@ -10,6 +10,7 @@ import { copyText } from '../lib/clipboard';
 import { formatPrice } from '../lib/format';
 import { DEFAULT_MATERIAL, STOCK, useProducts } from '../lib/products';
 import { useCategories } from '../lib/categories';
+import { rememberViewed } from '../lib/recent';
 import './Product.css';
 
 const VK_DIALOG = 'https://vk.me/craftthandmade';
@@ -78,6 +79,12 @@ export default function Product() {
   const [copying, setCopying] = useState(null);
   const close = useCallback(() => setConfirming(false), []);
   const product = items.find((item) => item.id === id);
+  const found = Boolean(product);
+
+  // Открыли изделие — в «Вы смотрели» (каталог)
+  useEffect(() => {
+    if (found) rememberViewed(id);
+  }, [found, id]);
 
   if (!product && (status === 'idle' || status === 'loading')) {
     return <p className="wrap product-loading">Загружаем изделие…</p>;

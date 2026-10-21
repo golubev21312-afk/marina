@@ -450,3 +450,33 @@ test('фото на весь экран: открыть, листать стре
     await api.remove('products', item.id);
   }
 });
+
+test('«Вы смотрели»: последние открытые изделия под каталогом, «Очистить»', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const made = [];
+  for (const title of ['Смотрели А', 'Смотрели Б']) {
+    made.push(await api.create('products', { title, stock: 'in_stock', category: category.id }));
+  }
+  try {
+    await page.goto('/catalog');
+    await expect(page.locator('.card').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Вы смотрели' })).toHaveCount(0);
+
+    for (const item of made) {
+      await page.goto(`/izdelie/${item.id}`);
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(item.title);
+    }
+    await page.goto('/catalog');
+    const recent = page.locator('.recent');
+    await expect(recent.locator('.card h3')).toHaveText(['Смотрели Б', 'Смотрели А']);
+    // Во время поиска блок прячется
+    await page.getByPlaceholder('Найти по названию').fill('Смотрели');
+    await expect(recent).toHaveCount(0);
+    await page.getByPlaceholder('Найти по названию').fill('');
+    await recent.getByRole('button', { name: 'Очистить' }).click();
+    await expect(recent).toHaveCount(0);
+  } finally {
+    await Promise.all(made.map((item) => api.remove('products', item.id)));
+  }
+});

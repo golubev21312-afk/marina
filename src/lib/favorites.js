@@ -1,59 +1,16 @@
-import { useSyncExternalStore } from 'react';
+import { createLocalList } from './localList';
 
-/**
- * «Отложенные» изделия — без регистрации, только в этом браузере
- * (localStorage). Хранятся номера изделий; удалённые из базы просто
- * не показываются. Соседние вкладки видят изменения (событие storage).
- */
-const KEY = 'craft-favorites';
-const listeners = new Set();
-let cache = null;
-
-function read() {
-  if (cache) return cache;
-  try {
-    const list = JSON.parse(localStorage.getItem(KEY) || '[]');
-    cache = Array.isArray(list) ? list.filter((id) => typeof id === 'string') : [];
-  } catch {
-    cache = []; // приватный режим — список живёт до закрытия вкладки
-  }
-  return cache;
-}
-
-function write(list) {
-  cache = list;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(list));
-  } catch {
-    /* не сохранилось — не страшно, в памяти список есть */
-  }
-  listeners.forEach((listener) => listener());
-}
-
-function subscribe(listener) {
-  listeners.add(listener);
-  const onStorage = (event) => {
-    if (event.key !== KEY) return;
-    cache = null;
-    listener();
-  };
-  window.addEventListener('storage', onStorage);
-  return () => {
-    listeners.delete(listener);
-    window.removeEventListener('storage', onStorage);
-  };
-}
+/** «Отложенные» изделия — только в этом браузере (lib/localList.js). */
+const list = createLocalList('craft-favorites');
 
 /** Номера отложенных изделий — новые в начале. */
-export function useFavorites() {
-  return useSyncExternalStore(subscribe, read);
-}
+export const useFavorites = list.useList;
 
 export function toggleFavorite(id) {
-  const list = read();
-  write(list.includes(id) ? list.filter((item) => item !== id) : [id, ...list]);
+  const current = list.read();
+  list.write(current.includes(id) ? current.filter((item) => item !== id) : [id, ...current]);
 }
 
 export function clearFavorites() {
-  write([]);
+  list.write([]);
 }

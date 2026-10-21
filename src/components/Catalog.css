@@ -45,7 +45,8 @@
   background: var(--accent-fill-hover);
 }
 
-.catalog__grid {
+.catalog__grid,
+.recent__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: clamp(16px, 2vw, 26px);

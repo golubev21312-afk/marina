@@ -108,7 +108,7 @@ test('товар: добавить с фото, в каталоге, налич�
   await expect(site.locator('.product__to-order-badge')).toHaveText('Под заказ');
   // Карточка в каталоге — на своём превью WebP, не на превью базы
   await site.goto('/catalog');
-  await expect(site.locator('.card', { hasText: 'Ангел из автотеста' }).locator('img')).toHaveAttribute(
+  await expect(site.locator('.catalog__grid .card', { hasText: 'Ангел из автотеста' }).locator('img')).toHaveAttribute(
     'src',
     /_600x750_[a-z0-9]{10}\.webp$/,
   );
