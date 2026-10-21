@@ -12,6 +12,39 @@
   margin-bottom: 18px;
 }
 
+/* Подбор и поиск — справа одной строкой; на узком экране поиск уходит вниз */
+.catalog__tools {
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px 14px;
+}
+
+@media (max-width: 600px) {
+  .catalog__tools {
+    justify-content: flex-start;
+  }
+}
+
+/* Подбор подарка — components/GiftPicker.jsx */
+.catalog__gift {
+  padding: 10px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent-fill);
+  color: var(--on-accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.catalog__gift:hover {
+  background: var(--accent-fill-hover);
+}
+
 .catalog__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));

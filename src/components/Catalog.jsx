@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import CategoryTabs from './CategoryTabs';
+import GiftPicker from './GiftPicker';
 import SearchBar from './SearchBar';
 import SectionNote from './SectionNote';
 import ProductCard from './ProductCard';
@@ -65,6 +66,8 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
   const activeOccasion = occasions.some((item) => item.id === occasion) ? occasion : '';
   // Сколько раз выбирали раздел — плашка сверху каждый раз берёт следующий факт
   const [turn, setTurn] = useState(0);
+  const [picking, setPicking] = useState(false);
+  const closePicker = useCallback(() => setPicking(false), []);
 
   const pick = (id) => {
     emitMotion();
@@ -91,7 +94,14 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
       <div className="wrap">
         <div className="catalog__head">
           <span className="kicker">Каталог</span>
-          <SearchBar value={query} onChange={setQuery} />
+          <div className="catalog__tools">
+            {products.length > 0 && (
+              <button type="button" className="catalog__gift" onClick={() => setPicking(true)}>
+                Подобрать подарок
+              </button>
+            )}
+            <SearchBar value={query} onChange={setQuery} />
+          </div>
         </div>
 
         {/* Ждём разделы из базы, иначе по ссылке на раздел плашка успевала
@@ -174,6 +184,7 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
         {/* «Малахит»: матрёшка с ромашками под каталогом; lazy — в другой теме не скачивается */}
         <img className="decor decor--malachite decor-catalog" src="/img/decor-romashka-faces-left.webp" alt="" aria-hidden="true" loading="lazy" />
       </div>
+      {picking && <GiftPicker products={products} onClose={closePicker} />}
     </section>
   );
 }

@@ -310,3 +310,44 @@ test('бездействие 2 минуты: выглядывает матрёш
   await page.clock.fastForward(150_000);
   await expect(hint).toHaveCount(0);
 });
+
+test('подбор подарка: кому → повод → бюджет, точное и близкое', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const make = (title, occasions, price) =>
+    api.create('products', { title, occasions, price, stock: 'in_stock', category: category.id });
+  const made = [
+    await make('Ангел для крёстной', ['крёстной', 'на новоселье'], 900),
+    await make('Неваляшка для свекрови', ['свекрови'], 2500),
+    await make('Большой ангел для крёстной', ['крёстной'], 5000),
+  ];
+  try {
+    await page.goto('/catalog');
+    await page.getByRole('button', { name: 'Подобрать подарок' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toContainText('Кому подарок?');
+    await dialog.getByRole('button', { name: 'крёстной' }).click();
+    await expect(dialog).toContainText('По какому поводу?');
+    await dialog.getByRole('button', { name: 'на новоселье' }).click();
+    await dialog.getByRole('button', { name: 'до 1000 ₽' }).click();
+    await expect(dialog.getByRole('heading')).toHaveText('Подходит: 1');
+    await expect(dialog.locator('.gift-picker__item')).toHaveText([/Ангел для крёстной/]);
+
+    // Назад и другой ответ: точно — нет, близкие — по числу совпадений
+    await dialog.getByRole('button', { name: '← Назад' }).click();
+    await dialog.getByRole('button', { name: '← Назад' }).click();
+    await dialog.getByRole('button', { name: '← Назад' }).click();
+    await dialog.getByRole('button', { name: 'свекрови' }).click();
+    await dialog.getByRole('button', { name: 'на новоселье' }).click();
+    await dialog.getByRole('button', { name: 'до 1000 ₽' }).click();
+    await expect(dialog.getByRole('heading')).toHaveText('Точно под ваш запрос пока ничего нет');
+    await expect(dialog.locator('.gift-picker__item').first()).toContainText('Ангел для крёстной');
+
+    // Изделие из подбора — переход, окно закрывается
+    await dialog.locator('.gift-picker__item').first().click();
+    await expect(page.getByRole('heading', { name: 'Ангел для крёстной', exact: true, level: 1 })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  } finally {
+    await Promise.all(made.map((item) => api.remove('products', item.id)));
+  }
+});
