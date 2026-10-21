@@ -32,7 +32,7 @@ export default function ProductPage() {
       </div>
       {/* Назад — в каталог: туда, где человек был (lib/catalogView.js), а если в каталоге
           ещё не был (пришёл по ссылке) — в раздел этого изделия */}
-      <BackHome to={section ? `/catalog?section=${section}` : '/catalog'} state={{ restore: true }}>
+      <BackHome to={section ? `/catalog/${section}` : '/catalog'} state={{ restore: true }}>
         В каталог
       </BackHome>
     </div>

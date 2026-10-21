@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import CategoryTabs from './CategoryTabs';
 import GiftPicker from './GiftPicker';
 import SearchBar from './SearchBar';
@@ -16,7 +17,7 @@ import './Catalog.css';
 
 /**
  * Все разделы видны сразу, даже пустые: каталог наполняется постепенно.
- * id вкладки — slug раздела (он же в адресе: /catalog?section=…)
+ * id вкладки — slug раздела (он же в адресе: /catalog/slug)
  */
 function makeTabs(categories, products) {
   return [
@@ -119,6 +120,20 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '', 
       sort,
     );
   }, [products, categories, activeTab.id, query, activeOccasion, sort]);
+
+  // Адрес — как на экране: /catalog/раздел?povod=… — ссылку можно скопировать и отправить.
+  // Заменяем, а не добавляем в историю: «Назад» уводит из каталога, а не по вкладкам.
+  // Ждём разделы: до них вкладка всегда «Все», и адрес мелькнул бы на /catalog
+  const navigate = useNavigate();
+  const { pathname, search } = useLocation();
+  useEffect(() => {
+    if (categoriesStatus !== 'ready') return;
+    const path = activeTab.id === 'all' ? '/catalog' : `/catalog/${activeTab.id}`;
+    const query = activeOccasion ? `?povod=${encodeURIComponent(activeOccasion)}` : '';
+    if (decodeURI(path + query) !== decodeURI(pathname + search)) {
+      navigate(path + query, { replace: true, state: { tabs: true } });
+    }
+  }, [categoriesStatus, activeTab.id, activeOccasion, pathname, search, navigate]);
 
   // Запоминаем, где человек в каталоге, — для возврата из изделия
   const sectionRef = useRef(null);

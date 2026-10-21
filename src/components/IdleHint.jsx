@@ -35,7 +35,7 @@ function markShown() {
 
 /** В каталоге зовём к индивидуальному заказу, на остальных страницах — в каталог. */
 function hintFor(pathname) {
-  if (pathname === '/catalog') {
+  if (pathname === '/catalog' || pathname.startsWith('/catalog/')) {
     return { text: 'Не нашли нужное? Мастер распишет изделие под ваш повод.', to: '/order', label: 'Индивидуальный заказ' };
   }
   return { text: 'Загляните в каталог — там все работы мастерской.', to: '/catalog', label: 'В каталог' };

@@ -111,7 +111,7 @@ export default function SiteMenu() {
             <ul>
               {sections.map((section) => (
                 <li key={section.id}>
-                  <TransitionLink to={`/catalog?section=${section.slug}`}>
+                  <TransitionLink to={`/catalog/${section.slug}`}>
                     {section.title}
                     {section.count > 0 && <span>{section.count}</span>}
                   </TransitionLink>

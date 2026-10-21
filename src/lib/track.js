@@ -100,7 +100,9 @@ const safeDecode = (text) => {
 /** Открыта страница (зовётся при каждой смене адреса). */
 export function trackPage() {
   const params = new URLSearchParams(location.search);
-  const section = location.pathname === '/catalog' ? params.get('section') : null;
+  // Раздел — /catalog/раздел; старые ссылки — /catalog?section=раздел
+  const section =
+    location.pathname.match(/^\/catalog\/([^/]+)/)?.[1] ?? (location.pathname === '/catalog' ? params.get('section') : null);
   const product = location.pathname.match(/^\/izdelie\/([^/]+)/)?.[1];
   send({
     kind: 'page',

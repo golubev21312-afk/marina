@@ -44,6 +44,33 @@ routerAdd('GET', '/izdelie/{id}', (e) => {
   );
 });
 
+// Раздел каталога — /catalog/nevalyashki: в превью название раздела
+routerAdd('GET', '/catalog/{section}', (e) => {
+  const og = require(`${__hooks}/og_lib.js`);
+  const html = og.readIndex();
+  if (!html) return e.next();
+  const base = og.baseUrl(e);
+  const slug = e.request.pathValue('section');
+  let title = 'Каталог — мастерская «Крафт»';
+  let description = 'Изделия из дерева с ручной росписью. Нижний Тагил.';
+  try {
+    const category = $app.findFirstRecordByData('categories', 'slug', slug);
+    title = category.getString('title') + ' — каталог мастерской «Крафт»';
+    description = og.shorten(category.getString('description'), 200) || description;
+  } catch {
+    // Раздела нет — общий каталог, сайт сам покажет «Все»
+  }
+  return e.html(
+    200,
+    og.inject(html, {
+      title: title,
+      description: description,
+      image: base + og.HOME_IMAGE,
+      url: base + '/catalog/' + encodeURIComponent(slug) + (e.request.url.rawQuery ? '?' + e.request.url.rawQuery : ''),
+    }),
+  );
+});
+
 // Обработчики в PocketBase изолированы — данные страниц объявлены внутри
 for (const pattern of ['/{$}', '/catalog', '/about', '/order']) {
   routerAdd('GET', pattern, (e) => {

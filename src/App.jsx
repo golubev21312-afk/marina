@@ -62,12 +62,18 @@ const TITLES = {
  * иначе после захода по ссылке на изделие во вкладке так и висело бы его название.
  */
 function PageTracker() {
-  const { pathname, search } = useLocation();
+  const { pathname, search, state } = useLocation();
+  // Вкладки каталога сами меняют адрес (/catalog/раздел) — это не новая страница:
+  // выбор раздела статистика считает отдельно (trackSection)
+  const fromTabs = Boolean(state?.tabs);
   useEffect(() => {
-    trackPage();
-  }, [pathname, search]);
+    if (!fromTabs) trackPage();
+  }, [pathname, search, fromTabs]);
   useEffect(() => {
-    if (!pathname.startsWith('/izdelie/')) document.title = TITLES[pathname] ?? 'Мастерская «Крафт»';
+    // Заголовки изделия и раздела ставят их страницы: им нужны данные из базы
+    if (!pathname.startsWith('/izdelie/') && !pathname.startsWith('/catalog/')) {
+      document.title = TITLES[pathname] ?? 'Мастерская «Крафт»';
+    }
   }, [pathname]);
   return null;
 }
@@ -93,6 +99,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Scenario />} />
                 <Route path="/catalog" element={<CatalogPage />} />
+                <Route path="/catalog/:section" element={<CatalogPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/order" element={<OrderPage />} />
                 <Route path="/izdelie/:id" element={<ProductPage />} />

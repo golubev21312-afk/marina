@@ -574,3 +574,41 @@ test('поиск: описание и материал, «ё» = «е», око�
     await Promise.all(made.map((item) => api.remove('products', item.id)));
   }
 });
+
+test('адрес раздела: /catalog/раздел, вкладки меняют адрес, старые ссылки, превью, статистика', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [first, second] = await api.list('categories', '&sort=sort');
+  const tab = (category) => page.getByRole('tab', { name: new RegExp(category.title) });
+  const pageVisits = async () => (await api.list('visits', "&filter=(kind='page')")).length;
+
+  // Прямая ссылка на раздел
+  await page.goto(`/catalog/${second.slug}`);
+  await expect(tab(second)).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveTitle(`${second.title} — каталог мастерской «Крафт»`);
+
+  // Вкладки переписывают адрес, но не историю и не статистику просмотров
+  await page.goto('/about');
+  await page.goto('/catalog');
+  await expect(tab(first)).toBeVisible();
+  await expect.poll(pageVisits).toBeGreaterThan(0);
+  const visitsBefore = await pageVisits();
+  await tab(first).click();
+  await expect(page).toHaveURL(new RegExp(`/catalog/${first.slug}$`));
+  await tab(second).click();
+  await expect(page).toHaveURL(new RegExp(`/catalog/${second.slug}$`));
+  await page.getByRole('tab', { name: /Все/ }).click();
+  await expect(page).toHaveURL(/\/catalog$/);
+  await page.waitForTimeout(500);
+  expect(await pageVisits()).toBe(visitsBefore);
+  await page.goBack();
+  await expect(page).toHaveURL(/\/about$/);
+
+  // Старая ссылка ?section= — открывается и переписывается на новый вид
+  await page.goto(`/catalog?section=${first.slug}`);
+  await expect(tab(first)).toHaveAttribute('aria-selected', 'true');
+  await expect(page).toHaveURL(new RegExp(`/catalog/${first.slug}$`));
+
+  // Превью для ВК — с названием раздела
+  const html = await (await request.get(`/catalog/${second.slug}`)).text();
+  expect(html).toContain(`<title>${second.title} — каталог мастерской «Крафт»</title>`);
+});

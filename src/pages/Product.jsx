@@ -131,7 +131,7 @@ export default function Product() {
 
         <div className="product__info appear-late">
           {category && (
-            <TransitionLink className="kicker" to={`/catalog?section=${category.slug}`}>
+            <TransitionLink className="kicker" to={`/catalog/${category.slug}`}>
               {category.title}
             </TransitionLink>
           )}
