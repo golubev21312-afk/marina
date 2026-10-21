@@ -374,3 +374,34 @@ test('сортировка каталога: новые, дешевле, дор�
     await Promise.all(made.map((item) => api.remove('products', item.id)));
   }
 });
+
+test('«Новинка»: добавленное за 2 недели — на карточке и на изделии; все новые — без метки', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const made = [];
+  for (const title of ['Новинка А', 'Новинка Б', 'Новинка В']) {
+    made.push(await api.create('products', { title, stock: 'in_stock', category: category.id }));
+  }
+  try {
+    // Всё добавлено только что — новинок больше половины, метки нет ни у кого
+    await page.goto('/catalog');
+    await expect(page.locator('.card').first()).toBeVisible();
+    await expect(page.locator('.card__new')).toHaveCount(0);
+
+    // Базе даты не задать — подменяем ответ: всё, кроме «Новинка А», добавлено месяц назад
+    const monthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().replace('T', ' ');
+    await page.route('**/api/collections/products/records?*', async (route) => {
+      const response = await route.fetch();
+      const body = await response.json();
+      body.items.forEach((item) => item.title !== 'Новинка А' && (item.created = monthAgo));
+      await route.fulfill({ response, json: body });
+    });
+    await page.reload();
+    await expect(page.locator('.card', { hasText: 'Новинка А' }).locator('.card__new')).toHaveText('Новинка');
+    await expect(page.locator('.card__new')).toHaveCount(1);
+    await page.goto(`/izdelie/${made[0].id}`);
+    await expect(page.locator('.product__new-badge')).toHaveText('Новинка');
+  } finally {
+    await Promise.all(made.map((item) => api.remove('products', item.id)));
+  }
+});

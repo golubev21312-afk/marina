@@ -129,6 +129,7 @@ export default function Product() {
             </TransitionLink>
           )}
           <h1>{product.title}</h1>
+          {product.isNew && <span className="product__new-badge">Новинка</span>}
           {product.stock === 'sold_out' && <span className="product__sold-badge">{STOCK.sold_out}</span>}
           {product.stock === 'to_order' && <span className="product__to-order-badge">{STOCK.to_order}</span>}
           {product.description && <p className="product__lead">{product.description}</p>}

@@ -69,11 +69,35 @@
   box-shadow: 0 6px 14px -8px rgba(var(--shadow-rgb), 0.6);
 }
 
-/* «Нет в наличии» — заметно: плашка цвета акцента, фото приглушено */
-.card__sold {
+/* Плашки в левом верхнем углу — столбиком: «Новинка», под ней наличие */
+.card__badges {
   position: absolute;
   left: 12px;
   top: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.card__badges:empty {
+  display: none;
+}
+
+/* «Новинка» — золото: не спутать ни с «Под заказ», ни с «Нет в наличии» */
+.card__new {
+  padding: 6px 12px;
+  border-radius: 2px 12px 2px 12px;
+  background: var(--gold);
+  box-shadow: 0 8px 18px -8px rgba(var(--shadow-rgb), 0.8);
+  color: var(--deep);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+/* «Нет в наличии» — заметно: плашка цвета акцента, фото приглушено */
+.card__sold {
   padding: 6px 12px;
   border-radius: 2px 12px 2px 12px;
   background: var(--accent-fill);
@@ -86,9 +110,6 @@
 
 /* «Под заказ» — спокойнее: тёмная плашка с золотой кромкой, фото не приглушаем */
 .card__to-order {
-  position: absolute;
-  left: 12px;
-  top: 12px;
   padding: 6px 12px;
   border-radius: 2px 12px 2px 12px;
   background: var(--deep);

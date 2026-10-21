@@ -21,6 +21,23 @@ export const DEFAULT_MATERIAL = 'дерево, ручная роспись';
 /** Порог подборки «до 1000 ₽» в каталоге. */
 export const CHEAP_PRICE = 1000;
 
+/** «Новинка» — добавлено за столько дней. */
+export const NEW_DAYS = 14;
+
+/**
+ * Какие изделия — новинки: добавлены за NEW_DAYS дней и не проданы. Если
+ * новинок половина каталога и больше (запуск, Марина завела всё разом) —
+ * не отмечаем никого: метка на всём ничего не выделяет.
+ */
+function markNew(items, now = Date.now()) {
+  // У базы дата через пробел: «2026-10-21 10:00:00.000Z» — Safari такую не понимает
+  const fresh = (item) =>
+    item.stock !== 'sold_out' && now - Date.parse(item.created.replace(' ', 'T')) < NEW_DAYS * 24 * 60 * 60 * 1000;
+  const newIds = new Set(items.filter(fresh).map((item) => item.id));
+  const show = newIds.size > 0 && newIds.size < items.length / 2;
+  return items.map((item) => ({ ...item, isNew: show && newIds.has(item.id) }));
+}
+
 /** Запись базы → товар в том виде, в каком его ждут компоненты. */
 export function toProduct(record) {
   const url = (file, size) => photoUrl(pb, record, file, size);
@@ -67,5 +84,5 @@ export const useAllProducts = store.useStore;
  */
 export function useProducts() {
   const state = store.useStore();
-  return useMemo(() => ({ ...state, items: state.items.filter((item) => !item.deleted) }), [state]);
+  return useMemo(() => ({ ...state, items: markNew(state.items.filter((item) => !item.deleted)) }), [state]);
 }

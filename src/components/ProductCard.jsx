@@ -18,8 +18,11 @@ export default function ProductCard({ product, index = 0 }) {
         <div className="card__thumb">
           {product.thumbs[0] && <img src={product.thumbs[0]} alt={product.title} loading="lazy" />}
           {product.price && <span className="card__price">{formatPrice(product.price)}</span>}
-          {product.stock === 'sold_out' && <span className="card__sold">{STOCK.sold_out}</span>}
-          {product.stock === 'to_order' && <span className="card__to-order">{STOCK.to_order}</span>}
+          <div className="card__badges">
+            {product.isNew && <span className="card__new">Новинка</span>}
+            {product.stock === 'sold_out' && <span className="card__sold">{STOCK.sold_out}</span>}
+            {product.stock === 'to_order' && <span className="card__to-order">{STOCK.to_order}</span>}
+          </div>
         </div>
         <div className="card__body">
           <h3>{product.title}</h3>

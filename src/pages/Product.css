@@ -234,6 +234,18 @@
   margin-top: 28px;
 }
 
+.product__new-badge {
+  display: inline-block;
+  margin-top: 12px;
+  margin-right: 8px;
+  padding: 6px 14px;
+  border-radius: 2px 12px 2px 12px;
+  background: var(--gold);
+  color: var(--deep);
+  font-size: 14px;
+  font-weight: 700;
+}
+
 .product__to-order-badge {
   display: inline-block;
   margin-top: 12px;
