@@ -5,7 +5,7 @@ import { createStore } from './store';
 /**
  * Отзывы покупателей — из базы (коллекция reviews), Марина ведёт их
  * в админке на вкладке «Отзывы». Сайт показывает только visible.
- * { id, author, text, paragraphs, when, productId, photo, preview, previewNames, sort, visible }
+ * { id, author, text, paragraphs, when, productId, photo, photoFull, preview, previewNames, sort, visible }
  */
 export function toReview(record) {
   const photo = (size) => (record.photo ? photoUrl(pb, record, record.photo, size) : '');
@@ -22,6 +22,8 @@ export function toReview(record) {
     productId: record.product || '',
     photoName: record.photo || '',
     photo: photo('480x480'),
+    // Большое — для просмотра на весь экран
+    photoFull: record.photo ? photoUrl(pb, record, record.photo) : '',
     preview: photo('160x160'),
     previewNames: record.previews ?? [],
     sort: record.sort,

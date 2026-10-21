@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { TransitionLink } from '../transition/Transition';
 import { useProducts } from '../lib/products';
 import { useReviews } from '../lib/reviews';
+import Lightbox from './Lightbox';
 import './Reviews.css';
 
 /** Длиннее — сворачиваем, «Читать полностью» раскрывает. */
@@ -10,10 +11,18 @@ const LONG = 360;
 function ReviewCard({ review, product }) {
   const long = review.text.length > LONG;
   const [open, setOpen] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
 
   return (
     <figure className="review">
-      {review.photo && <img className="review__photo" src={review.photo} alt={`Фото от покупателя — ${review.author}`} loading="lazy" />}
+      {review.photo && (
+        <button type="button" className="review__photo-open" onClick={() => setZoomed(true)} aria-label={`Фото от покупателя — ${review.author}: открыть на весь экран`}>
+          <img className="review__photo" src={review.photo} alt={`Фото от покупателя — ${review.author}`} loading="lazy" />
+        </button>
+      )}
+      {zoomed && (
+        <Lightbox photos={[review.photoFull]} title={`Фото от покупателя — ${review.author}`} onClose={() => setZoomed(false)} />
+      )}
       <blockquote className={`review__text ${long && !open ? 'is-clamped' : ''}`}>
         {review.paragraphs.map((text, i) => (
           <p key={i}>{text}</p>

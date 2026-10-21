@@ -612,3 +612,26 @@ test('адрес раздела: /catalog/раздел, вкладки меня�
   const html = await (await request.get(`/catalog/${second.slug}`)).text();
   expect(html).toContain(`<title>${second.title} — каталог мастерской «Крафт»</title>`);
 });
+
+test('фото в отзыве открывается на весь экран', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const review = await api.upload('reviews', {
+    author: 'Ольга',
+    text: 'Подарила маме — очень довольна!',
+    visible: 'true',
+    sort: '10',
+    photo: { name: 'otzyv.webp', mimeType: 'image/webp', buffer: fs.readFileSync('public/img/kot-moryak.webp') },
+  });
+  try {
+    await page.goto('/about');
+    await page.getByRole('button', { name: 'Фото от покупателя — Ольга: открыть на весь экран' }).click();
+    const box = page.getByRole('dialog', { name: /Фото от покупателя — Ольга/ });
+    // Большое фото, а не уменьшенная копия 480×480
+    await expect(box.locator('img')).toHaveAttribute('src', /otzyv/);
+    await expect(box.locator('img')).not.toHaveAttribute('src', /thumb=/);
+    await page.keyboard.press('Escape');
+    await expect(box).toHaveCount(0);
+  } finally {
+    await api.remove('reviews', review.id);
+  }
+});
