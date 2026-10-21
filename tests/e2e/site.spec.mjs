@@ -480,3 +480,68 @@ test('«Вы смотрели»: последние открытые издел�
     await Promise.all(made.map((item) => api.remove('products', item.id)));
   }
 });
+
+test('возврат из изделия в каталог: тот же раздел, поиск, сортировка и место прокрутки', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [, category] = await api.list('categories', '&sort=sort');
+  const made = [];
+  for (let i = 1; i <= 8; i++) {
+    made.push(await api.create('products', { title: `Возврат ${i}`, price: i * 100, stock: 'in_stock', category: category.id }));
+  }
+  try {
+    await page.setViewportSize({ width: 1280, height: 700 });
+    await page.goto('/catalog');
+    await page.getByRole('tab', { name: new RegExp(category.title) }).click();
+    await page.getByPlaceholder('Найти по названию').fill('Возврат');
+    await page.getByLabel('Сортировка:').selectOption({ label: 'Сначала дороже' });
+    const scroller = page.locator('.page');
+    const card = page.locator('.catalog__grid .card', { hasText: 'Возврат 2' });
+    await card.scrollIntoViewIfNeeded();
+    const scrolled = await scroller.evaluate((el) => el.scrollTop);
+    expect(scrolled).toBeGreaterThan(200);
+
+    // Пока идёт переход, новые нажатия сайт пропускает — ждём, пока он кончится
+    const settled = () => expect(page.locator('.bubbles')).toHaveAttribute('class', 'bubbles');
+    const checkRestored = async (at) => {
+      await expect(page.getByRole('tab', { name: new RegExp(category.title) })).toHaveAttribute('aria-selected', 'true');
+      await expect(page.getByPlaceholder('Найти по названию')).toHaveValue('Возврат');
+      await expect(page.getByLabel('Сортировка:')).toHaveValue('expensive');
+      // Карточка — на том же месте экрана, что и перед уходом
+      await expect.poll(async () => Math.abs((await cardTop()) - at)).toBeLessThan(30);
+    };
+
+    // Перед уходом в изделие — запоминаем, где были (click сам докручивает до карточки)
+    const cardTop = async () => (await card.boundingBox()).y;
+    const leave = async () => {
+      await settled();
+      await card.scrollIntoViewIfNeeded();
+      const at = await cardTop();
+      await card.click();
+      return at;
+    };
+
+    // Кнопка «В каталог» на изделии
+    let at = await leave();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Возврат 2');
+    await settled();
+    await page.getByRole('link', { name: 'В каталог' }).click();
+    await checkRestored(at);
+
+    // «Назад» браузера
+    at = await leave();
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Возврат 2');
+    await settled();
+    await page.goBack();
+    await checkRestored(at);
+
+    // Обычный переход (ссылка на раздел над названием изделия) — каталог с начала
+    await card.click();
+    await settled();
+    await page.locator('.product__info .kicker').click();
+    await expect(page.getByPlaceholder('Найти по названию')).toHaveValue('');
+    await expect(page.locator('.catalog__grid .card')).toHaveCount(8);
+    expect(await scroller.evaluate((el) => el.scrollTop)).toBeLessThan(50);
+  } finally {
+    await Promise.all(made.map((item) => api.remove('products', item.id)));
+  }
+});

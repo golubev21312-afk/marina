@@ -10,7 +10,7 @@ import './ProductCard.css';
  */
 export default function ProductCard({ product, index = 0 }) {
   return (
-    <div className="card-wrap" style={{ '--card-index': index }}>
+    <div className="card-wrap" data-id={product.id} style={{ '--card-index': index }}>
       <TransitionLink
         to={`/izdelie/${product.id}`}
         className={`card ${product.stock === 'sold_out' ? 'is-sold' : ''}`}

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import CategoryTabs from './CategoryTabs';
 import GiftPicker from './GiftPicker';
 import SearchBar from './SearchBar';
@@ -10,6 +10,7 @@ import { emitMotion } from '../lib/motion';
 import { CHEAP_PRICE, useProducts } from '../lib/products';
 import { useCategories } from '../lib/categories';
 import { trackSection } from '../lib/track';
+import { saveCatalogView } from '../lib/catalogView';
 import './Catalog.css';
 
 /**
@@ -71,23 +72,27 @@ function fitsOccasion(item, occasion) {
   return item.occasions.includes(occasion);
 }
 
-export default function Catalog({ initialSection = 'all', initialOccasion = '' }) {
+/**
+ * saved — где человек был в каталоге (lib/catalogView.js): вернулся из изделия —
+ * тот же раздел, подборка, поиск, сортировка и место прокрутки.
+ */
+export default function Catalog({ initialSection = 'all', initialOccasion = '', saved = null }) {
   // Товары — из базы; Марина добавляет их в админке (/admin)
   const { status, items: products } = useProducts();
   const { status: categoriesStatus, items: categories } = useCategories();
   const tabs = useMemo(() => makeTabs(categories, products), [categories, products]);
-  const [active, setActive] = useState(initialSection);
+  const [active, setActive] = useState(saved?.section ?? initialSection);
   // Раздела из адреса может не быть (удалили) — тогда «Все»
   const activeTab = tabs.find((tab) => tab.id === active) ?? tabs[0];
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(saved?.query ?? '');
   const occasions = useMemo(() => makeOccasions(products), [products]);
-  const [occasion, setOccasion] = useState(initialOccasion);
+  const [occasion, setOccasion] = useState(saved?.occasion ?? initialOccasion);
   // Метку из адреса могли убрать у всех изделий — тогда без подборки
   const activeOccasion = occasions.some((item) => item.id === occasion) ? occasion : '';
   // Сколько раз выбирали раздел — плашка сверху каждый раз берёт следующий факт
-  const [turn, setTurn] = useState(0);
+  const [turn, setTurn] = useState(saved?.turn ?? 0);
   const [picking, setPicking] = useState(false);
-  const [sort, setSort] = useState('manual');
+  const [sort, setSort] = useState(saved?.sort ?? 'manual');
   const closePicker = useCallback(() => setPicking(false), []);
 
   const pick = (id) => {
@@ -108,11 +113,74 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '' }
     return sortItems(found, sort);
   }, [products, activeTab.id, query, activeOccasion, sort]);
 
+  // Запоминаем, где человек в каталоге, — для возврата из изделия
+  const sectionRef = useRef(null);
+  useEffect(() => {
+    saveCatalogView({ section: activeTab.id, occasion: activeOccasion, query, sort, turn });
+  }, [activeTab.id, activeOccasion, query, sort, turn]);
+
+  // Прокручивается не окно, а страница (.page). Помним не пиксели, а первую видимую
+  // карточку и её отступ от верха: плашка с фактом над каталогом бывает разной
+  // высоты, и по пикселям карточки бы съехали
+  const ready = status === 'ready';
+  useEffect(() => {
+    const page = sectionRef.current?.closest('.page');
+    if (!page || !ready) return undefined;
+    const cards = () => sectionRef.current?.querySelectorAll('.catalog__grid .card-wrap') ?? [];
+    // Место карточки на странице — по раскладке, без анимаций: страница и карточки
+    // въезжают со сдвигом, и по экранным координатам место выходило бы не то
+    const layoutTop = (el) => {
+      let y = 0;
+      for (let node = el; node && node !== page; node = node.offsetParent) y += node.offsetTop;
+      return y;
+    };
+
+    const anchor = () => {
+      const card = [...cards()].find((el) => layoutTop(el) + el.offsetHeight > page.scrollTop + 80);
+      return card ? { anchor: card.dataset.id, anchorTop: layoutTop(card) - page.scrollTop } : { anchor: null };
+    };
+    let pending = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(pending);
+      pending = requestAnimationFrame(() => saveCatalogView({ scroll: page.scrollTop, ...anchor() }));
+    };
+
+    // Вернулись — та же карточка на том же месте. Карточки ещё появляются, и
+    // страница бывает короче нужного: дотягиваем, пока она растёт (до секунды),
+    // если человек сам не начал листать
+    let frame = 0;
+    let stop = false;
+    const until = Date.now() + 1000;
+    const target = () => {
+      const card = saved.anchor && [...cards()].find((el) => el.dataset.id === saved.anchor);
+      return card ? layoutTop(card) - saved.anchorTop : saved.scroll;
+    };
+    const restore = () => {
+      const want = target();
+      page.scrollTop = want;
+      if (!stop && Math.abs(page.scrollTop - want) > 2 && Date.now() < until) frame = requestAnimationFrame(restore);
+    };
+    const userScrolls = () => (stop = true);
+    if (saved?.scroll) restore();
+    else saveCatalogView({ scroll: 0, anchor: null });
+
+    page.addEventListener('scroll', onScroll, { passive: true });
+    page.addEventListener('wheel', userScrolls, { passive: true });
+    page.addEventListener('touchstart', userScrolls, { passive: true });
+    return () => {
+      cancelAnimationFrame(frame);
+      cancelAnimationFrame(pending);
+      page.removeEventListener('scroll', onScroll);
+      page.removeEventListener('wheel', userScrolls);
+      page.removeEventListener('touchstart', userScrolls);
+    };
+  }, [ready, saved]);
+
   const searching = query.trim() !== '';
   const loading = status === 'idle' || status === 'loading';
 
   return (
-    <section className="catalog" id="catalog">
+    <section ref={sectionRef} className="catalog" id="catalog">
       <div className="wrap">
         <div className="catalog__head">
           <span className="kicker">Каталог</span>
