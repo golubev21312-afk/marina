@@ -1,0 +1,71 @@
+/* Заглушки, пока грузятся изделия (components/Skeleton.jsx) */
+.skeleton {
+  border-radius: 3px 14px 3px 14px;
+  /* Основа — цвет карточки: на камне «Малахита» прозрачная заглушка терялась */
+  background:
+    linear-gradient(100deg, transparent 30%, var(--hover-fill) 50%, transparent 70%) 0 0 / 300% 100%,
+    linear-gradient(var(--muted-fill), var(--muted-fill)),
+    var(--paper);
+  opacity: 0.85;
+  animation: skeleton-shine 1.4s ease-in-out infinite;
+}
+
+.skeleton-card {
+  display: grid;
+  gap: 12px;
+}
+
+.skeleton-card__thumb {
+  aspect-ratio: 4 / 5;
+}
+
+.skeleton-card__line {
+  height: 14px;
+  margin-top: 4px;
+}
+
+.skeleton-card__line.is-short {
+  width: 55%;
+}
+
+.skeleton-product__photo {
+  aspect-ratio: 4 / 5;
+}
+
+.skeleton-product__title {
+  width: 70%;
+  height: 40px;
+  margin-bottom: 24px;
+}
+
+.skeleton-product__button {
+  width: 180px;
+  height: 48px;
+  margin-top: 28px;
+  border-radius: 999px;
+}
+
+/* Фраза для диктора — на экране её нет, вместо неё заглушки */
+.skeleton__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@keyframes skeleton-shine {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+  }
+}

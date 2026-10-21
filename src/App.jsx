@@ -81,7 +81,10 @@ function PageTracker() {
 /** Упала страница — запасной экран; на другом адресе пробуем заново. */
 function Guarded({ children }) {
   const { pathname } = useLocation();
-  return <ErrorBoundary key={pathname}>{children}</ErrorBoundary>;
+  // Каталог и его разделы — одна страница: вкладки сами меняют адрес, и пересоздание
+  // сбросило бы поиск, сортировку и место
+  const page = pathname.startsWith('/catalog') ? '/catalog' : pathname;
+  return <ErrorBoundary key={page}>{children}</ErrorBoundary>;
 }
 
 /** Главная — 3D-сценарий; остальные разделы — отдельные страницы, переход «пузырями». */
@@ -98,8 +101,9 @@ export default function App() {
             <Suspense fallback={null}>
               <Routes>
                 <Route path="/" element={<Scenario />} />
-                <Route path="/catalog" element={<CatalogPage />} />
-                <Route path="/catalog/:section" element={<CatalogPage />} />
+                {/* Один маршрут на каталог и разделы: при двух каталог пересоздавался бы
+                    при первом же нажатии на вкладку — и поиск со всем прочим сбрасывались */}
+                <Route path="/catalog/:section?" element={<CatalogPage />} />
                 <Route path="/about" element={<AboutPage />} />
                 <Route path="/order" element={<OrderPage />} />
                 <Route path="/izdelie/:id" element={<ProductPage />} />

@@ -154,13 +154,6 @@
   margin-top: 22px;
 }
 
-.product-loading {
-  padding-block: 80px;
-  text-align: center;
-  font-style: italic;
-  color: var(--ink-soft);
-}
-
 .product__sold {
   display: block;
   margin-top: 4px;

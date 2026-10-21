@@ -491,6 +491,9 @@ test('возврат из изделия в каталог: тот же разд
   try {
     await page.setViewportSize({ width: 1280, height: 700 });
     await page.goto('/catalog');
+    // Ждём, пока каталог загрузится (заглушки уйдут): иначе жмём по разметке, которая сейчас сменится
+    await expect(page.locator('.catalog__grid .card').first()).toBeVisible();
+    await expect(page.locator('.skeleton-card')).toHaveCount(0);
     await page.getByRole('tab', { name: new RegExp(category.title) }).click();
     await page.getByPlaceholder('Поиск по изделиям').fill('Возврат');
     await page.getByLabel('Сортировка:').selectOption({ label: 'Сначала дороже' });
@@ -592,8 +595,12 @@ test('адрес раздела: /catalog/раздел, вкладки меня�
   await expect(tab(first)).toBeVisible();
   await expect.poll(pageVisits).toBeGreaterThan(0);
   const visitsBefore = await pageVisits();
+  // Поиск, набранный на «Все», переживает выбор вкладки (каталог не пересоздаётся)
+  await page.getByPlaceholder('Поиск по изделиям').fill('ангел');
   await tab(first).click();
   await expect(page).toHaveURL(new RegExp(`/catalog/${first.slug}$`));
+  await expect(page.getByPlaceholder('Поиск по изделиям')).toHaveValue('ангел');
+  await page.getByPlaceholder('Поиск по изделиям').fill('');
   await tab(second).click();
   await expect(page).toHaveURL(new RegExp(`/catalog/${second.slug}$`));
   await page.getByRole('tab', { name: /Все/ }).click();
@@ -634,4 +641,22 @@ test('фото в отзыве открывается на весь экран',
   } finally {
     await api.remove('reviews', review.id);
   }
+});
+
+test('медленная загрузка: заглушки вместо карточек, потом изделия', async ({ page }) => {
+  // База отвечает через 2 с — как на медленном мобильном интернете
+  await page.route('**/api/collections/products/records?*', async (route) => {
+    await new Promise((done) => setTimeout(done, 2000));
+    await route.continue();
+  });
+  await page.goto('/catalog');
+  await expect(page.locator('.skeleton-card').first()).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Загружаем изделия' })).toBeAttached();
+  await expect(page.locator('.catalog__grid .card').first()).toBeVisible({ timeout: 10_000 });
+  await expect(page.locator('.skeleton-card')).toHaveCount(0);
+
+  await page.goto(`/izdelie/${product.id}`);
+  await expect(page.locator('.skeleton-product__photo')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Тестовый ангел', { timeout: 10_000 });
+  await expect(page.locator('.skeleton')).toHaveCount(0);
 });

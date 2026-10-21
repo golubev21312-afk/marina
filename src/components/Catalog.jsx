@@ -6,6 +6,7 @@ import SearchBar from './SearchBar';
 import SectionNote from './SectionNote';
 import ProductCard from './ProductCard';
 import RecentlyViewed from './RecentlyViewed';
+import { CardSkeletons } from './Skeleton';
 import { TransitionLink } from '../transition/Transition';
 import { emitMotion } from '../lib/motion';
 import { CHEAP_PRICE, useProducts } from '../lib/products';
@@ -167,34 +168,35 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '', 
       pending = requestAnimationFrame(() => saveCatalogView({ scroll: page.scrollTop, ...anchor() }));
     };
 
-    // Вернулись — та же карточка на том же месте. Карточки ещё появляются, и
-    // страница бывает короче нужного: дотягиваем, пока она растёт (до секунды),
-    // если человек сам не начал листать
-    let frame = 0;
-    let stop = false;
-    const until = Date.now() + 1000;
-    const target = () => {
-      const card = saved.anchor && [...cards()].find((el) => el.dataset.id === saved.anchor);
-      return card ? layoutTop(card) - saved.anchorTop : saved.scroll;
-    };
+    // Вернулись — та же карточка на том же месте. Страница может дорасти позже
+    // (догружается что-то выше или ниже): каждый раз, как меняется её высота,
+    // ставим карточку обратно — 3 секунды или пока человек сам не начал листать
+    let stop = !saved?.scroll;
+    const until = Date.now() + 3000;
     const restore = () => {
-      const want = target();
-      page.scrollTop = want;
-      if (!stop && Math.abs(page.scrollTop - want) > 2 && Date.now() < until) frame = requestAnimationFrame(restore);
+      if (stop || Date.now() > until) return;
+      const card = saved.anchor && [...cards()].find((el) => el.dataset.id === saved.anchor);
+      page.scrollTop = card ? layoutTop(card) - saved.anchorTop : saved.scroll;
     };
+    const grows = new ResizeObserver(restore);
+    if (saved?.scroll) {
+      restore();
+      grows.observe(page.firstElementChild ?? page);
+      [...page.children].forEach((child) => grows.observe(child));
+    } else saveCatalogView({ scroll: 0, anchor: null });
     const userScrolls = () => (stop = true);
-    if (saved?.scroll) restore();
-    else saveCatalogView({ scroll: 0, anchor: null });
 
     page.addEventListener('scroll', onScroll, { passive: true });
-    page.addEventListener('wheel', userScrolls, { passive: true });
-    page.addEventListener('touchstart', userScrolls, { passive: true });
+    for (const type of ['wheel', 'touchstart', 'keydown', 'pointerdown']) {
+      page.addEventListener(type, userScrolls, { passive: true });
+    }
     return () => {
-      cancelAnimationFrame(frame);
+      grows.disconnect();
       cancelAnimationFrame(pending);
       page.removeEventListener('scroll', onScroll);
-      page.removeEventListener('wheel', userScrolls);
-      page.removeEventListener('touchstart', userScrolls);
+      for (const type of ['wheel', 'touchstart', 'keydown', 'pointerdown']) {
+        page.removeEventListener(type, userScrolls);
+      }
     };
   }, [ready, saved]);
 
@@ -260,7 +262,7 @@ export default function Catalog({ initialSection = 'all', initialOccasion = '', 
           )}
         </div>
 
-        {loading && <p className="catalog__loading">Загружаем изделия…</p>}
+        {loading && <CardSkeletons />}
         {status === 'error' && (
           <p className="catalog__loading">
             Не получилось загрузить изделия — проверьте интернет и обновите страницу.

@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import FavoriteButton from '../components/FavoriteButton';
 import Gallery from '../components/Gallery';
 import ProductCard from '../components/ProductCard';
+import { ProductSkeleton } from '../components/Skeleton';
 import Reviews from '../components/Reviews';
 import VkConfirm from '../components/VkConfirm';
 import { TransitionLink } from '../transition/Transition';
@@ -87,7 +88,7 @@ export default function Product() {
   }, [found, id]);
 
   if (!product && (status === 'idle' || status === 'loading')) {
-    return <p className="wrap product-loading">Загружаем изделие…</p>;
+    return <ProductSkeleton />;
   }
 
   // База недоступна — изделие, может, и есть; не говорим «уехало»
