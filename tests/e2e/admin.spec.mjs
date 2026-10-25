@@ -412,6 +412,33 @@ test('фильтр списка товаров: раздел, наличие, ч
   }
 });
 
+test('товары в Excel: файл .xlsx с названием, разделом, ценой и наличием', async ({ page, request }) => {
+  const api = await adminApi(request);
+  const [category] = await api.list('categories', '&sort=sort');
+  const item = await api.create('products', { title: 'Ёлка & <друг>', price: 1250, stock: 'to_order', category: category.id });
+  try {
+    await login(page);
+    await expect(page.getByText('Ёлка & <друг>')).toBeVisible();
+    const [file] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByRole('button', { name: 'Товары в Excel' }).click(),
+    ]);
+    expect(file.suggestedFilename()).toMatch(/^kraft-tovary-\d{4}-\d{2}-\d{2}\.xlsx$/);
+    const fs = await import('node:fs/promises');
+    const bytes = await fs.readFile(await file.path());
+    // zip без сжатия: XML листа лежит в файле как есть
+    expect(bytes.subarray(0, 2).toString()).toBe('PK');
+    const text = bytes.toString('utf8');
+    const row = text.match(/<row r="\d+">(?:(?!<\/row>).)*Ёлка &amp; &lt;друг&gt;.*?<\/row>/)?.[0];
+    expect(row).toBeTruthy();
+    expect(row).toContain(`>${category.title}<`);
+    expect(row).toContain('<v>1250</v>');
+    expect(row).toContain('>Под заказ<');
+  } finally {
+    await api.remove('products', item.id);
+  }
+});
+
 test('QR-код сайта: наклейка, предупреждение на этом компьютере, скачать картинку', async ({ page }) => {
   await login(page);
   await page.getByRole('button', { name: 'QR-код сайта' }).click();

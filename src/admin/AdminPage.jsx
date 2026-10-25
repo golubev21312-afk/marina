@@ -4,6 +4,7 @@ import { pb } from '../lib/pb';
 import { refreshProducts, STOCK, useAdminProducts } from '../lib/products';
 import { missingInCard } from './completeness';
 import SiteQr from './SiteQr';
+import { downloadProductsExcel } from './productsExcel';
 import { formatPrice } from '../lib/format';
 import { useCategories } from '../lib/categories';
 import CategoriesPanel from './CategoriesPanel';
@@ -293,6 +294,9 @@ export default function AdminPage() {
           <Link to="/catalog">Открыть каталог</Link>
           <button type="button" onClick={() => setQrOpen(true)}>
             QR-код сайта
+          </button>
+          <button type="button" disabled={items.length === 0} onClick={() => downloadProductsExcel(items, categoryTitle)}>
+            Товары в Excel
           </button>
           {pb.authStore.record?.collectionName === 'editors' && (
             <button
