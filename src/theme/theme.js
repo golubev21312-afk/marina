@@ -6,24 +6,48 @@ export const THEMES = [
   { id: 'kraft', title: 'Белая' },
 ];
 
-/** Тема для нового посетителя. Тот же выбор — в скрипте index.html. */
+/** Тема, если устройство не сообщает, светлое оно или тёмное. */
 export const DEFAULT_THEME = 'malachite';
 
-// Тот же ключ читает скрипт в index.html — он ставит тему до первой отрисовки
+// Тот же ключ читает public/theme-init.js — он ставит тему до первой отрисовки
 const STORAGE_KEY = 'craft-theme';
 const EVENT = 'craft:theme';
+const LIGHT = window.matchMedia?.('(prefers-color-scheme: light)');
 
 export function currentTheme() {
   return document.documentElement.dataset.theme || DEFAULT_THEME;
 }
 
-function apply(id) {
+/** Тема по устройству: светлое — «Белая», тёмное или не сообщает — «Малахит». */
+function systemTheme() {
+  return LIGHT?.matches ? 'kraft' : DEFAULT_THEME;
+}
+
+/** Тема, которую человек выбрал сам (кнопкой или ?theme=), — иначе null. */
+function savedTheme() {
+  try {
+    const id = localStorage.getItem(STORAGE_KEY);
+    return THEMES.some((theme) => theme.id === id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+// Устройство сменило тему (вечером само или человек в настройках) — следуем,
+// если на сайте тему не выбирали. Выбор не запоминаем: это всё ещё «как у устройства»
+LIGHT?.addEventListener('change', () => {
+  if (!savedTheme() && systemTheme() !== currentTheme()) apply(systemTheme(), false);
+});
+
+function apply(id, remember = true) {
   const root = document.documentElement;
   root.dataset.theme = id;
-  try {
-    localStorage.setItem(STORAGE_KEY, id);
-  } catch {
-    /* приватный режим — тема просто не запомнится */
+  if (remember) {
+    try {
+      localStorage.setItem(STORAGE_KEY, id);
+    } catch {
+      /* приватный режим — тема просто не запомнится */
+    }
   }
   // Цвет панели браузера на телефоне — под тему
   const color = getComputedStyle(root).getPropertyValue('--theme-color').trim();

@@ -22,6 +22,9 @@ export default defineConfig({
     userAgent:
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36',
     viewport: { width: 1280, height: 860 },
+    // Тёмное устройство — сайт в «Малахите», как задуманы тесты и снимки;
+    // светлое (по умолчанию у Playwright) открыло бы «Белую» (п. 21)
+    colorScheme: 'dark',
     // Рисуем программно (SwiftShader), без видеокарты — и здесь, и на GitHub,
     // где её нет. Тесты не зависят от драйвера: 19.10 зависшая Intel UHD
     // давала ~1 кадр/с, и Playwright не мог дождаться, пока кнопка «встанет»

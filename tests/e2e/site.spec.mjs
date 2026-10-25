@@ -287,6 +287,32 @@ test('цвет строки браузера (theme-color) — как у тем�
   }
 });
 
+test('тема по устройству: светлое — «Белая», тёмное — «Малахит», на лету; выбор кнопкой главнее', async ({ page }) => {
+  const theme = () => page.evaluate(() => document.documentElement.dataset.theme);
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.goto('/catalog');
+  expect(await theme()).toBe('kraft');
+  // Цвет строки браузера — уже из theme-init.js, до React
+  expect(await page.locator('meta[name="theme-color"]').getAttribute('content')).toBe('#f1e7d4');
+  // Устройство само перешло на тёмную — сайт следом, без перезагрузки
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect.poll(theme).toBe('malachite');
+  await page.emulateMedia({ colorScheme: 'no-preference' });
+  await expect.poll(theme).toBe('malachite');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect.poll(theme).toBe('kraft');
+
+  // Выбрал кнопкой — запомнено и не меняется вслед за устройством, в том числе после перезагрузки
+  await page.getByRole('button', { name: 'Включить тему «Малахит»' }).click();
+  await expect.poll(theme).toBe('malachite');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.waitForTimeout(300);
+  expect(await theme()).toBe('malachite');
+  await page.reload();
+  expect(await theme()).toBe('malachite');
+});
+
 test('бездействие 2 минуты: выглядывает матрёшка с подсказкой, раз за визит', async ({ page }) => {
   // fastForward перескакивает время: runFor честно крутил бы каждый кадр 3D на странице заказа
   await page.clock.install();
