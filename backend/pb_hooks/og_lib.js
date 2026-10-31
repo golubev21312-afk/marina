@@ -38,7 +38,9 @@ function baseUrl(e) {
 function inject(html, meta) {
   const title = escape(meta.title);
   const description = escape(meta.description);
-  html = html.replace(/<title>[\s\S]*?<\/title>/, '<title>' + title + '</title>');
+  // Замена — функцией, не строкой: в строке $' $& $` значат «текст после /
+  // совпадение / до» и ломали HTML, если попадались в названии или адресе
+  html = html.replace(/<title>[\s\S]*?<\/title>/, () => '<title>' + title + '</title>');
   html = html.replace(/<meta\s+name="description"[\s\S]*?\/>/, '');
   html = html.replace(/<meta\s+property="og:(type|title|description|image|url)"[\s\S]*?\/>/g, '');
   const tags = [
@@ -49,7 +51,7 @@ function inject(html, meta) {
     '<meta property="og:image" content="' + escape(meta.image) + '" />',
     '<meta property="og:url" content="' + escape(meta.url) + '" />',
   ].join('\n    ');
-  return html.replace('</head>', '    ' + tags + '\n  </head>');
+  return html.replace('</head>', () => '    ' + tags + '\n  </head>');
 }
 
 /** Описание: первые ~200 символов текста, по границе слова. */

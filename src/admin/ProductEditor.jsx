@@ -20,6 +20,8 @@ const newPhoto = ({ file, previews }) => ({
 
 /** Столько фото база принимает у одного товара. */
 const MAX_PHOTOS = 10;
+/** Потолок цены — как в базе (миграция price_max): ловит лишние нули. */
+const MAX_PRICE = 1000000;
 
 /** Поводы-подсказки, пока своих мало: Марина нажимает — метка добавляется. */
 const STARTER_OCCASIONS = ['учителю', 'врачу', 'ребёнку', 'маме', 'коллеге', 'на свадьбу', 'на Новый год'];
@@ -210,6 +212,7 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
     setError('');
     if (!title.trim()) return setError('Напишите название товара.');
     if (!category) return setError('Выберите раздел каталога.');
+    if (Number(price) > MAX_PRICE) return setError('Цена больше 1 000 000 ₽ — проверьте, нет ли лишних нулей.');
     if (copyingPhotos) return setError('Подождите — фото ещё копируются.');
     if (!photos.length) return setError('Добавьте хотя бы одно фото.');
     if (photos.length > MAX_PHOTOS) return setError(`У товара может быть не больше ${MAX_PHOTOS} фото — уберите лишние.`);
@@ -355,6 +358,7 @@ export default function ProductEditor({ product, copyFrom, onSaved, onCancel }) 
             type="number"
             inputMode="numeric"
             min="0"
+            max={MAX_PRICE}
             step="1"
             value={price}
             onChange={(e) => setPrice(e.target.value)}

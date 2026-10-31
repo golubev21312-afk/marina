@@ -17,7 +17,9 @@
   `pocketbase_0.40.5_windows_amd64.zip` со страницы
   [релизов](https://github.com/pocketbase/pocketbase/releases/tag/v0.40.5)
   и положить exe в `backend/`. Для Linux — `pocketbase_0.40.5_linux_amd64.zip`,
-  файл `backend/pocketbase`.
+  файл `backend/pocketbase`. Для macOS — `pocketbase_0.40.5_darwin_amd64.zip`
+  (на Apple M — `darwin_arm64`), тоже `backend/pocketbase`. `npm run db`
+  сам выберет нужный файл.
 - Google Chrome — только для автотестов.
 
 ```sh

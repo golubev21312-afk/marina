@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "stories": "node scripts/build-stories.mjs",
-    "db": "backend\\pocketbase.exe serve --http 127.0.0.1:8090 --dir backend/pb_data --migrationsDir backend/pb_migrations --hooksDir backend/pb_hooks",
+    "db": "node scripts/db.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
