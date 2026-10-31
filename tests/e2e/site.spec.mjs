@@ -297,8 +297,8 @@ test('тема по устройству: светлое — «Белая», т�
   // Устройство само перешло на тёмную — сайт следом, без перезагрузки
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect.poll(theme).toBe('malachite');
-  await page.emulateMedia({ colorScheme: 'no-preference' });
-  await expect.poll(theme).toBe('malachite');
+  // «Не сообщает» (no-preference) не проверяем: Chrome такого больше не знает
+  // и считает светлым — в настоящем браузере этого случая не бывает
   await page.emulateMedia({ colorScheme: 'light' });
   await expect.poll(theme).toBe('kraft');
 
